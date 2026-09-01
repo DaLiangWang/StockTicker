@@ -5,38 +5,29 @@ import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.layout.DisplayFeature
-import com.github.premnirmal.ticker.AppPreferences
-import com.github.premnirmal.ticker.CustomTabs
 import com.github.premnirmal.ticker.navigation.calculateContentAndNavigationType
 import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.ticker.network.data.changeColour
-import com.github.premnirmal.ticker.news.NewsCard
 import com.github.premnirmal.ticker.news.QuoteDetailViewModel
-import com.github.premnirmal.ticker.portfolio.AlertsActivity
 import com.github.premnirmal.ticker.portfolio.DisplaynameActivity
 import com.github.premnirmal.ticker.portfolio.HoldingsActivity
 import com.github.premnirmal.ticker.portfolio.NotesActivity
 import com.github.premnirmal.ticker.portfolio.search.AddSymbolDialog
 import com.github.premnirmal.ticker.ui.ContentType.SINGLE_PANE
-import com.github.premnirmal.ticker.ui.LinkText
-import com.github.premnirmal.ticker.ui.LinkTextData
 import com.github.premnirmal.ticker.ui.LocalAppMessaging
 import com.github.premnirmal.ticker.ui.fadingEdges
 import com.github.premnirmal.ticker.ui.formatAxisDate
@@ -50,7 +41,6 @@ import com.google.accompanist.adaptive.FoldAwareConfiguration
 import com.google.accompanist.adaptive.HorizontalTwoPaneStrategy
 import com.google.accompanist.adaptive.TwoPane
 import org.koin.androidx.compose.koinViewModel
-import org.koin.compose.koinInject
 
 /**
  * Android host for the shared [com.github.premnirmal.ticker.detail.QuoteDetailScreen]. Resolves the
@@ -77,15 +67,13 @@ fun QuoteDetailScreen(
             widthSizeClass = widthSizeClass, displayFeatures = displayFeatures
         ).second
     val context = LocalContext.current
-    val appPreferences = koinInject<AppPreferences>()
     val appMessaging = LocalAppMessaging.current
 
-    val articles by viewModel.newsData.collectAsStateWithLifecycle()
     val quoteDetail by viewModel.quote.collectAsStateWithLifecycle(null)
     val currentQuote = quoteDetail?.dataSafe?.quote ?: quote
     val details = remember(quoteDetail) {
         quoteDetail?.takeIf { it.wasSuccessful }
-            ?.let { buildQuoteDetails(it.data, context) }
+            ?.let { buildQuoteDetails(it.data.quote, context) }
             ?: emptyList()
     }
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
@@ -101,8 +89,6 @@ fun QuoteDetailScreen(
 
     // Per-section editable state, updated by the activity-result launchers below.
     var holdings by remember(currentQuote.position) { mutableStateOf(currentQuote.position) }
-    var alertAbove by remember(currentQuote.properties) { mutableFloatStateOf(currentQuote.getAlertAbove()) }
-    var alertBelow by remember(currentQuote.properties) { mutableFloatStateOf(currentQuote.getAlertBelow()) }
     var notes by remember(currentQuote.properties) { mutableStateOf(currentQuote.properties?.notes ?: "") }
     var displayname by remember(currentQuote.properties) {
         mutableStateOf(currentQuote.properties?.displayname ?: "")
@@ -113,15 +99,6 @@ fun QuoteDetailScreen(
     ) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
             holdings = result.data?.getParcelableExtra(HoldingsActivity.POSITIONS) ?: holdings
-        }
-    }
-    val alertsLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result: ActivityResult ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val data = result.data
-            alertAbove = data?.getFloatExtra(AlertsActivity.ALERT_ABOVE, alertAbove) ?: alertAbove
-            alertBelow = data?.getFloatExtra(AlertsActivity.ALERT_BELOW, alertBelow) ?: alertBelow
         }
     }
     val notesLauncher = rememberLauncherForActivityResult(
@@ -173,22 +150,15 @@ fun QuoteDetailScreen(
         quote = currentQuote,
         chartData = chartData,
         changeColour = changeColour,
-        upColor = ColourPalette.PositiveGreen,
-        downColor = ColourPalette.NegativeRed,
+        upColor = ColourPalette.UpColour,
+        downColor = ColourPalette.DownColour,
         details = details,
-        articles = articles.map { it.article },
-        website = quoteDetail?.dataSafe?.quoteSummary?.assetProfile?.website,
-        longBusinessSummary = quoteDetail?.dataSafe?.quoteSummary?.assetProfile?.longBusinessSummary,
         isInPortfolio = isInPortfolio,
         isRefreshing = isRefreshing,
         showAddRemoveTooltip = showAddRemoveTooltip,
         range = range,
         graphError = graphError != null,
         position = holdings,
-        alertAbove = alertAbove,
-        alertBelow = alertBelow,
-        alertAboveText = appPreferences.selectedDecimalFormat.format(alertAbove),
-        alertBelowText = appPreferences.selectedDecimalFormat.format(alertBelow),
         notes = notes,
         displayname = displayname,
         strings = strings,
@@ -201,19 +171,12 @@ fun QuoteDetailScreen(
                 viewModel.fetchAll(currentQuote)
             }
         },
-        onRangeSelected = { selected -> viewModel.range.value = selected },
         onAddRemoveTooltipShown = { viewModel.addRemoveTooltipShown() },
         onCardClick = { title, data -> appMessaging.sendBottomSheet(title, data) },
         onEditPositions = {
             holdingsLauncher.launch(
                 Intent(context, HoldingsActivity::class.java)
                     .putExtra(HoldingsActivity.TICKER, currentQuote.symbol)
-            )
-        },
-        onEditAlerts = {
-            alertsLauncher.launch(
-                Intent(context, AlertsActivity::class.java)
-                    .putExtra(AlertsActivity.TICKER, currentQuote.symbol)
             )
         },
         onEditNotes = {
@@ -235,26 +198,9 @@ fun QuoteDetailScreen(
         card = { cardModifier, onClick, content ->
             AppCard(modifier = cardModifier, onClick = onClick, content = content)
         },
-        newsCard = { article -> NewsCard(item = article) },
         modifier = modifier,
         addSymbolDialog = { symbol, onDismissRequest ->
             AddSymbolDialog(symbol = symbol, onDismissRequest = onDismissRequest)
-        },
-        websiteLink = { website ->
-            val linkContext = LocalContext.current
-            val linkColor = MaterialTheme.colorScheme.primary
-            LinkText(
-                linkTextData = listOf(
-                    LinkTextData(
-                        text = website,
-                        tag = website,
-                        annotation = website
-                    )
-                ),
-                onLinkClick = { annotation ->
-                    CustomTabs.openTab(linkContext, annotation, linkColor.toArgb())
-                }
-            )
         },
         listFadingEdges = { state -> Modifier.fadingEdges(state) },
         twoPane = if (resolvedContentType == SINGLE_PANE) {

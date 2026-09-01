@@ -3,8 +3,8 @@ package com.github.premnirmal.ticker.portfolio.search
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.premnirmal.ticker.model.FetchResult
-import com.github.premnirmal.ticker.network.NewsProvider
 import com.github.premnirmal.ticker.network.SuggestionsProvider
+import com.github.premnirmal.ticker.network.TrendingProvider
 import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.ticker.network.data.Suggestion
 import com.github.premnirmal.ticker.ui.AppMessaging
@@ -23,7 +23,7 @@ import timber.log.Timber
 class SearchViewModel constructor(
     private val suggestionsProvider: SuggestionsProvider,
     private val widgetDataProvider: WidgetDataProvider,
-    private val newsProvider: NewsProvider,
+    private val trendingProvider: TrendingProvider,
     private val appMessaging: AppMessaging,
 ) : ViewModel() {
 
@@ -47,7 +47,7 @@ class SearchViewModel constructor(
         fetchTrendingJob?.cancel()
         fetchTrendingJob = viewModelScope.launch {
             _isRefreshing.value = true
-            val trendingResult = newsProvider.fetchTrendingStocks(true)
+            val trendingResult = trendingProvider.fetchTrendingStocks(true)
             if (trendingResult.wasSuccessful) {
                 _trendingStocks.emit(trendingResult.data)
             }

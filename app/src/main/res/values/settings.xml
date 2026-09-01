@@ -62,4 +62,9 @@
     <item>Saturday</item>
     <item>Sunday</item>
   </string-array>
+
+  <string-array name="a_share_data_sources">
+    <item>Tencent Finance</item>
+    <item>East Money</item>
+  </string-array>
 </resources>

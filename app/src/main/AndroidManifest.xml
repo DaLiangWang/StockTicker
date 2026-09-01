@@ -47,11 +47,6 @@
             android:theme="@style/AddPositionTheme"
             android:windowSoftInputMode="adjustResize" />
         <activity
-            android:name="com.github.premnirmal.ticker.portfolio.AlertsActivity"
-            android:label="@string/add_alerts"
-            android:theme="@style/AddPositionTheme"
-            android:windowSoftInputMode="adjustResize" />
-        <activity
             android:exported="true"
             android:name="com.github.premnirmal.ticker.settings.WidgetSettingsActivity"
             android:label="@string/action_Settings"

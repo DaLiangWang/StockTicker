@@ -66,7 +66,7 @@ import androidx.compose.ui.unit.dp
 import com.github.premnirmal.ticker.model.ChartData
 import com.github.premnirmal.ticker.model.Range
 import com.github.premnirmal.ticker.network.data.DataPoint
-import com.github.premnirmal.ticker.network.data.NewsArticle
+
 import com.github.premnirmal.ticker.network.data.Position
 import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.ticker.ui.ErrorState
@@ -154,19 +154,12 @@ fun QuoteDetailScreen(
     upColor: Color,
     downColor: Color,
     details: List<QuoteDetailItem>,
-    articles: List<NewsArticle>?,
-    website: String?,
-    longBusinessSummary: String?,
     isInPortfolio: Boolean,
     isRefreshing: Boolean,
     showAddRemoveTooltip: Boolean,
     range: Range,
     graphError: Boolean,
     position: Position?,
-    alertAbove: Float,
-    alertBelow: Float,
-    alertAboveText: String,
-    alertBelowText: String,
     notes: String,
     displayname: String,
     strings: QuoteDetailStrings,
@@ -175,11 +168,9 @@ fun QuoteDetailScreen(
     editIcon: Painter,
     snackbarHostState: SnackbarHostState,
     onRefresh: () -> Unit,
-    onRangeSelected: (Range) -> Unit,
     onAddRemoveTooltipShown: () -> Unit,
     onCardClick: (title: String, data: String) -> Unit,
     onEditPositions: () -> Unit,
-    onEditAlerts: () -> Unit,
     onEditNotes: () -> Unit,
     onEditDisplayname: () -> Unit,
     hourAxisFormatter: (Double) -> String,
@@ -187,11 +178,9 @@ fun QuoteDetailScreen(
     valueAxisFormatter: (Double) -> String,
     markerFormatter: (x: Double, y: Double) -> String,
     card: @Composable (modifier: Modifier, onClick: () -> Unit, content: @Composable ColumnScope.() -> Unit) -> Unit,
-    newsCard: @Composable (article: NewsArticle) -> Unit,
     modifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit = {},
     addSymbolDialog: @Composable (symbol: String, onDismissRequest: () -> Unit) -> Unit = { _, _ -> },
-    websiteLink: @Composable (website: String) -> Unit = {},
     listFadingEdges: (ScrollableState) -> Modifier = { Modifier },
     twoPane: (@Composable (first: @Composable () -> Unit, second: @Composable () -> Unit) -> Unit)? = null,
 ) {
@@ -287,17 +276,13 @@ fun QuoteDetailScreen(
                 ) {
                     quoteInfo(
                         quote, chartData, changeColour, range, graphError, strings,
-                        hourAxisFormatter, dateAxisFormatter, valueAxisFormatter, markerFormatter,
-                        onRangeSelected
+                        hourAxisFormatter, dateAxisFormatter, valueAxisFormatter, markerFormatter
                     )
                     quoteDetailsGrid(details, card, onCardClick)
                     quotePositionsNotesAlerts(
-                        quote, isInPortfolio, position, alertAbove, alertBelow, alertAboveText,
-                        alertBelowText, notes, displayname, strings, upColor, downColor, editIcon,
-                        card, onEditPositions, onEditAlerts, onEditNotes, onEditDisplayname
+                        quote, isInPortfolio, position, notes, displayname, strings, upColor, downColor, editIcon,
+                        card, onEditPositions, onEditNotes, onEditDisplayname
                     )
-                    quoteBackground(website, longBusinessSummary, websiteLink)
-                    newsItems(articles, newsCard)
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
                     }
@@ -313,10 +298,8 @@ fun QuoteDetailScreen(
                         ) {
                             quoteInfo(
                                 quote, chartData, changeColour, range, graphError, strings,
-                                hourAxisFormatter, dateAxisFormatter, valueAxisFormatter, markerFormatter,
-                                onRangeSelected
+                                hourAxisFormatter, dateAxisFormatter, valueAxisFormatter, markerFormatter
                             )
-                            quoteBackground(website, longBusinessSummary, websiteLink)
                             item {
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
@@ -331,11 +314,9 @@ fun QuoteDetailScreen(
                         ) {
                             quoteDetailsGrid(details, card, onCardClick)
                             quotePositionsNotesAlerts(
-                                quote, isInPortfolio, position, alertAbove, alertBelow, alertAboveText,
-                                alertBelowText, notes, displayname, strings, upColor, downColor, editIcon,
-                                card, onEditPositions, onEditAlerts, onEditNotes, onEditDisplayname
+                                quote, isInPortfolio, position, notes, displayname, strings, upColor, downColor, editIcon,
+                                card, onEditPositions, onEditNotes, onEditDisplayname
                             )
-                            newsItems(articles, newsCard)
                             item {
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
@@ -374,33 +355,6 @@ private fun QuoteDetailGrid(
     )
 }
 
-private fun LazyGridScope.quoteBackground(
-    website: String?,
-    longBusinessSummary: String?,
-    websiteLink: @Composable (website: String) -> Unit,
-) {
-    if (!longBusinessSummary.isNullOrEmpty() || !website.isNullOrEmpty()) {
-        item(span = {
-            GridItemSpan(maxLineSpan)
-        }) {
-            Column {
-                if (!website.isNullOrEmpty()) {
-                    Box(modifier = Modifier.padding(top = 8.dp)) {
-                        websiteLink(website)
-                    }
-                }
-                if (!longBusinessSummary.isNullOrEmpty()) {
-                    Text(
-                        modifier = Modifier.padding(top = 8.dp),
-                        text = longBusinessSummary,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-        }
-    }
-}
-
 private fun LazyGridScope.quoteInfo(
     quote: Quote,
     chartData: ChartData?,
@@ -412,7 +366,6 @@ private fun LazyGridScope.quoteInfo(
     dateAxisFormatter: (Double) -> String,
     valueAxisFormatter: (Double) -> String,
     markerFormatter: (x: Double, y: Double) -> String,
-    onRangeSelected: (Range) -> Unit,
 ) {
     val lastTradePrice = quote.priceFormat.format(chartData?.regularMarketPrice ?: quote.lastTradePrice)
     val change = chartData?.changeStringWithSign() ?: quote.changeStringWithSign()
@@ -471,7 +424,6 @@ private fun LazyGridScope.quoteInfo(
             dateAxisFormatter = dateAxisFormatter,
             valueAxisFormatter = valueAxisFormatter,
             markerFormatter = markerFormatter,
-            onRangeSelected = onRangeSelected,
         )
     }
 }
@@ -487,78 +439,34 @@ private fun GraphItem(
     dateAxisFormatter: (Double) -> String,
     valueAxisFormatter: (Double) -> String,
     markerFormatter: (x: Double, y: Double) -> String,
-    onRangeSelected: (Range) -> Unit,
 ) {
-    // Keep the chart from consuming the whole viewport in short (landscape) windows so the range
-    // selector chips below it stay visible without scrolling. On tall windows (portrait / iPad) the
-    // height is capped at the original 220.dp.
+    // Keep the chart from consuming the whole viewport in short (landscape) windows. On tall windows
+    // (portrait / iPad) the height is capped at the original 220.dp.
     val windowInfo = LocalWindowInfo.current
     val density = LocalDensity.current
     val chartHeight = with(density) {
         (windowInfo.containerSize.height.toDp() * ChartHeightRatio)
             .coerceIn(MinChartHeight, MaxChartHeight)
     }
-    Column {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(chartHeight),
-            contentAlignment = Alignment.Center
-        ) {
-            if (!graphError && dataPoints.isEmpty()) {
-                CircularProgressIndicator()
-            } else if (graphError && dataPoints.isEmpty()) {
-                ErrorState(text = strings.graphFetchFailed)
-            } else {
-                PriceChartView(
-                    dataPoints = dataPoints,
-                    lineColor = lineColor,
-                    xAxisFormatter = if (range == Range.ONE_DAY) hourAxisFormatter else dateAxisFormatter,
-                    yAxisFormatter = valueAxisFormatter,
-                    markerFormatter = markerFormatter,
-                    modifier = Modifier.fillMaxSize()
-                )
-            }
-        }
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            FilterChip(onClick = {
-                onRangeSelected(Range.ONE_DAY)
-            }, selected = range != Range.ONE_DAY, label = {
-                Text(text = strings.rangeOneDay)
-            })
-            FilterChip(onClick = {
-                onRangeSelected(Range.TWO_WEEKS)
-            }, selected = range != Range.TWO_WEEKS, label = {
-                Text(text = strings.rangeTwoWeeks)
-            })
-            FilterChip(onClick = {
-                onRangeSelected(Range.ONE_MONTH)
-            }, selected = range != Range.ONE_MONTH, label = {
-                Text(text = strings.rangeOneMonth)
-            })
-            FilterChip(onClick = {
-                onRangeSelected(Range.THREE_MONTH)
-            }, selected = range != Range.THREE_MONTH, label = {
-                Text(text = strings.rangeThreeMonth)
-            })
-            FilterChip(onClick = {
-                onRangeSelected(Range.ONE_YEAR)
-            }, selected = range != Range.ONE_YEAR, label = {
-                Text(text = strings.rangeOneYear)
-            })
-            FilterChip(onClick = {
-                onRangeSelected(Range.FIVE_YEARS)
-            }, selected = range != Range.FIVE_YEARS, label = {
-                Text(text = strings.rangeFiveYears)
-            })
-            FilterChip(onClick = {
-                onRangeSelected(Range.MAX)
-            }, selected = range != Range.MAX, label = {
-                Text(text = strings.rangeMax)
-            })
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(chartHeight),
+        contentAlignment = Alignment.Center
+    ) {
+        if (!graphError && dataPoints.isEmpty()) {
+            CircularProgressIndicator()
+        } else if (graphError && dataPoints.isEmpty()) {
+            ErrorState(text = strings.graphFetchFailed)
+        } else {
+            PriceChartView(
+                dataPoints = dataPoints,
+                lineColor = lineColor,
+                xAxisFormatter = if (range == Range.ONE_DAY) hourAxisFormatter else dateAxisFormatter,
+                yAxisFormatter = valueAxisFormatter,
+                markerFormatter = markerFormatter,
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 }
@@ -608,10 +516,6 @@ private fun LazyGridScope.quotePositionsNotesAlerts(
     quote: Quote,
     isInPortfolio: Boolean,
     position: Position?,
-    alertAbove: Float,
-    alertBelow: Float,
-    alertAboveText: String,
-    alertBelowText: String,
     notes: String,
     displayname: String,
     strings: QuoteDetailStrings,
@@ -620,7 +524,6 @@ private fun LazyGridScope.quotePositionsNotesAlerts(
     editIcon: Painter,
     card: @Composable (modifier: Modifier, onClick: () -> Unit, content: @Composable ColumnScope.() -> Unit) -> Unit,
     onEditPositions: () -> Unit,
-    onEditAlerts: () -> Unit,
     onEditNotes: () -> Unit,
     onEditDisplayname: () -> Unit,
 ) {
@@ -649,29 +552,6 @@ private fun LazyGridScope.quotePositionsNotesAlerts(
         item(span = {
             GridItemSpan(maxLineSpan)
         }) {
-        }
-        item(span = {
-            GridItemSpan(maxLineSpan)
-        }) {
-            Column(
-                modifier = Modifier.clickable {
-                    onEditAlerts()
-                }
-            ) {
-                EditSectionHeader(title = strings.alerts, editIcon = editIcon)
-                AlertsCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                    alertAbove = alertAbove,
-                    alertBelow = alertBelow,
-                    alertAboveText = alertAboveText,
-                    alertBelowText = alertBelowText,
-                    strings = strings,
-                    card = card,
-                    onClick = onEditAlerts,
-                )
-            }
         }
         item(span = {
             GridItemSpan(maxLineSpan)
@@ -719,20 +599,6 @@ private fun LazyGridScope.quotePositionsNotesAlerts(
                 )
             }
         }
-    }
-}
-
-private fun LazyGridScope.newsItems(
-    articles: List<NewsArticle>?,
-    newsCard: @Composable (article: NewsArticle) -> Unit,
-) {
-    items(
-        count = articles?.size ?: 0,
-        span = {
-            GridItemSpan(maxLineSpan)
-        }
-    ) { i ->
-        newsCard(articles!![i])
     }
 }
 
@@ -787,152 +653,112 @@ private fun PositionDetailCard(
     val averagePositionPrice = remember(position) { quote.averagePositionPrice() }
 
     card(modifier, onClick) {
-        Row(
-            modifier = Modifier.padding(vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(modifier = Modifier.weight(0.5f)) {
-                QuoteDetailValueText(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = numShares,
-                    textAlign = TextAlign.Center
+        Column(modifier = Modifier.padding(vertical = 4.dp)) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                PositionStat(
+                    modifier = Modifier.weight(1f),
+                    value = numShares,
+                    label = strings.shares,
                 )
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = strings.shares,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelMedium
+                PositionStat(
+                    modifier = Modifier.weight(1f),
+                    value = holdings,
+                    label = strings.equityValue,
                 )
             }
-            Column(modifier = Modifier.weight(0.5f)) {
-                QuoteDetailValueText(
+            if (hasPositions) {
+                PositionStatDivider()
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    PositionStat(
+                        modifier = Modifier.weight(1f),
+                        value = averagePositionPrice,
+                        label = strings.averagePrice,
+                    )
+                    ChangeStat(
+                        modifier = Modifier.weight(1f),
+                        text = "$gainLossString ($gainLossPercentage)",
+                        label = strings.gainLoss,
+                        up = gainLoss > 0,
+                        down = gainLoss < 0,
+                        upColor = upColor,
+                        downColor = downColor,
+                    )
+                }
+                PositionStatDivider()
+                ChangeStat(
                     modifier = Modifier.fillMaxWidth(),
-                    text = holdings,
-                    textAlign = TextAlign.Center
-                )
-                Text(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = strings.equityValue,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelMedium
-                )
-            }
-        }
-        if (hasPositions) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    modifier = Modifier.weight(0.5f),
-                    text = strings.averagePrice,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelMedium
-                )
-                QuoteDetailValueText(
-                    modifier = Modifier.weight(0.5f),
-                    text = averagePositionPrice,
-                    textAlign = TextAlign.Center
-                )
-            }
-            Row(
-                modifier = Modifier.padding(top = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    modifier = Modifier.weight(0.5f),
-                    text = strings.gainLoss,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelMedium
-                )
-                QuoteDetailChangeText(
-                    modifier = Modifier.weight(0.5f),
-                    text = "$gainLossString ($gainLossPercentage)",
-                    up = gainLoss > 0,
-                    down = gainLoss < 0,
-                    upColor = upColor,
-                    downColor = downColor,
-                    textAlign = TextAlign.Center
-                )
-            }
-            Row(
-                modifier = Modifier.padding(vertical = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    modifier = Modifier.weight(0.5f),
-                    text = strings.dayChangeAmount,
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.labelMedium
-                )
-                QuoteDetailChangeText(
-                    modifier = Modifier.weight(0.5f),
                     text = dayChange,
+                    label = strings.dayChangeAmount,
                     up = quote.isUp,
                     down = quote.isDown,
                     upColor = upColor,
                     downColor = downColor,
-                    textAlign = TextAlign.Center
                 )
             }
         }
     }
 }
 
+/** Value above label: the figure is what the eye lands on, the label only qualifies it. */
 @Composable
-private fun AlertsCard(
-    alertAbove: Float,
-    alertBelow: Float,
-    alertAboveText: String,
-    alertBelowText: String,
-    strings: QuoteDetailStrings,
-    card: @Composable (modifier: Modifier, onClick: () -> Unit, content: @Composable ColumnScope.() -> Unit) -> Unit,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+private fun PositionStat(
+    modifier: Modifier,
+    value: String,
+    label: String,
 ) {
-    if (alertAbove > 0f || alertBelow > 0f) {
-        card(modifier, onClick) {
-            Column {
-                if (alertAbove > 0f) {
-                    Row(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            modifier = Modifier.weight(0.5f),
-                            text = strings.alertAbove,
-                            style = MaterialTheme.typography.labelMedium,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            modifier = Modifier.weight(0.5f),
-                            text = alertAboveText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-                if (alertBelow > 0f) {
-                    Row(
-                        modifier = Modifier.padding(vertical = 8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            modifier = Modifier.weight(0.5f),
-                            text = strings.alertBelow,
-                            style = MaterialTheme.typography.labelMedium,
-                            textAlign = TextAlign.Center
-                        )
-                        Text(
-                            modifier = Modifier.weight(0.5f),
-                            text = alertBelowText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            }
-        }
+    Column(modifier = modifier.padding(vertical = 6.dp)) {
+        QuoteDetailValueText(
+            modifier = Modifier.fillMaxWidth(),
+            text = value,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = label,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium
+        )
     }
+}
+
+/** A coloured change figure above its label, so gains and losses read at a glance. */
+@Composable
+private fun ChangeStat(
+    modifier: Modifier,
+    text: String,
+    label: String,
+    up: Boolean,
+    down: Boolean,
+    upColor: Color,
+    downColor: Color,
+) {
+    Column(modifier = modifier.padding(vertical = 6.dp)) {
+        QuoteDetailChangeText(
+            modifier = Modifier.fillMaxWidth(),
+            text = text,
+            up = up,
+            down = down,
+            upColor = upColor,
+            downColor = downColor,
+            textAlign = TextAlign.Center
+        )
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = label,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
+}
+
+@Composable
+private fun PositionStatDivider() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(1.dp)
+            .background(MaterialTheme.colorScheme.outlineVariant)
+    )
 }
 
 @Composable

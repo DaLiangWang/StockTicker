@@ -4,7 +4,7 @@ import android.content.Context
 import com.github.premnirmal.ticker.format
 import com.github.premnirmal.ticker.formatBigNumbers
 import com.github.premnirmal.ticker.formatDate
-import com.github.premnirmal.ticker.news.QuoteDetailViewModel.QuoteWithSummary
+import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.tickerwidget.R
 
 /**
@@ -14,9 +14,7 @@ import com.github.premnirmal.tickerwidget.R
  * `Context`-based number/date formatting; the `@StringRes` titles are resolved to plain [String]s
  * here so the shared screen renders a fully-resolved [QuoteDetailItem].
  */
-fun buildQuoteDetails(summary: QuoteWithSummary, context: Context): List<QuoteDetailItem> {
-    val quote = summary.quote
-    val quoteSummary = summary.quoteSummary
+fun buildQuoteDetails(quote: Quote, context: Context): List<QuoteDetailItem> {
     val details = mutableListOf<QuoteDetailItem>()
     fun add(titleRes: Int, data: String?) {
         if (data != null) {
@@ -52,9 +50,5 @@ fun buildQuoteDetails(summary: QuoteWithSummary, context: Context): List<QuoteDe
         R.string.quote_details_dividend_date,
         quote.dividendDate?.formatDate(context.getString(R.string.date_format_long))
     )
-    add(R.string.quote_details_earnings_growth, quoteSummary?.financialData?.earningsGrowth?.fmt)
-    add(R.string.quote_details_revenue_growth, quoteSummary?.financialData?.revenueGrowth?.fmt)
-    add(R.string.quote_details_profit_margins, quoteSummary?.financialData?.profitMargins?.fmt)
-    add(R.string.quote_details_gross_margins, quoteSummary?.financialData?.grossMargins?.fmt)
     return details
 }

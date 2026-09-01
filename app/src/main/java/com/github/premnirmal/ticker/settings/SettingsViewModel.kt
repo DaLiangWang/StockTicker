@@ -8,7 +8,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.model.StocksProvider
-import com.github.premnirmal.ticker.notifications.NotificationsHandler
 import com.github.premnirmal.ticker.showDialog
 import com.github.premnirmal.ticker.widget.WidgetData
 import com.github.premnirmal.ticker.widget.WidgetDataProvider
@@ -24,7 +23,6 @@ class SettingsViewModel constructor(
     private val widgetDataProvider: WidgetDataProvider,
     private val appPreferences: AppPreferences,
     private val stocksProvider: StocksProvider,
-    private val notificationsHandler: NotificationsHandler,
 ) : ViewModel() {
 
     val settings: StateFlow<SettingsData>
@@ -116,16 +114,6 @@ class SettingsViewModel constructor(
         }
     }
 
-    fun setReceiveNotificationAlerts(receive: Boolean, initializeHandler: Boolean = false) {
-        viewModelScope.launch {
-            appPreferences.setNotificationAlerts(receive)
-            _settings.emit(buildData(widgetDataProvider.dataForWidgetId(AppWidgetManager.INVALID_APPWIDGET_ID)))
-        }
-        if (initializeHandler) {
-            notificationsHandler.initialize()
-        }
-    }
-
     fun sharePortfolio(context: Context, uri: Uri) {
         viewModelScope.launch {
             val result = TickersExporter.exportTickers(context, uri, stocksProvider.tickers.value)
@@ -175,17 +163,70 @@ class SettingsViewModel constructor(
         }
     }
 
+    /**
+     * Imports positions (symbol, shares, cost price) from [fileUri] and reports the outcome as a
+     * localised message. Unlike [importPortfolio] this creates real holdings, which is what the
+     * 今日盈亏 / 累计盈亏 / 当前市值 figures are computed from.
+     */
+    fun importPositions(context: Context, fileUri: Uri) {
+        viewModelScope.launch {
+            val count = PositionsImportTask(stocksProvider).import(context, fileUri)
+            val message = when {
+                count == null -> context.getString(R.string.positions_import_fail)
+                count == 0 -> context.getString(R.string.positions_import_empty)
+                else -> context.getString(R.string.positions_import_success, count)
+            }
+            context.showDialog(message)
+        }
+    }
+
+    /**
+     * Imports positions from a raw CSV [text] the user pasted into the import dialog. Parses both the
+     * extended `symbol,market,name,quantity,cost_price[,currency,note]` format and the legacy
+     * `symbol,shares,cost` form via [PositionImportParser]. Returns the number of rows that became real
+     * holdings, or `null` when nothing could be parsed. The host surfaces the outcome.
+     */
+    suspend fun importPositionsFromText(text: String): Int? {
+        val entries = PositionImportParser.parse(text)
+        if (entries.isEmpty()) return null
+        stocksProvider.addStocks(entries.map { it.symbol })
+        var imported = 0
+        for (entry in entries) {
+            val shares = entry.shares
+            val price = entry.price
+            if (entry.hasPosition && shares != null && price != null) {
+                stocksProvider.addHolding(entry.symbol, shares, price)
+                imported++
+            }
+        }
+        return imported
+    }
+
+    /**
+     * Selects which mainland-China source A-share quotes are fetched from
+     * ([UserPreferences.A_SHARE_SOURCE_TENCENT] or [UserPreferences.A_SHARE_SOURCE_EAST_MONEY]). The
+     * change takes effect on the next refresh — the shared source router reads the preference per
+     * call.
+     */
+    fun setAShareDataSource(sourcePref: Int) {
+        viewModelScope.launch {
+            appPreferences.aShareDataSourcePref = sourcePref
+            _settings.emit(buildData(widgetDataProvider.dataForWidgetId(AppWidgetManager.INVALID_APPWIDGET_ID)))
+            broadcastUpdateWidget()
+        }
+    }
+
     private fun buildData(widgetData: WidgetData): SettingsData {
         return SettingsData(
             hasWidgets = widgetDataProvider.hasWidget(),
             themePref = appPreferences.themePref,
             updateIntervalPref = appPreferences.updateIntervalPref,
             updateDays = appPreferences.updateDays(),
-            notificationAlerts = appPreferences.notificationAlerts(),
             startTime = appPreferences.startTime(),
             endTime = appPreferences.endTime(),
             autoSort = if (!widgetDataProvider.hasWidget()) widgetData.autoSortEnabled() else null,
-            roundToTwoDp = appPreferences.roundToTwoDecimalPlaces()
+            roundToTwoDp = appPreferences.roundToTwoDecimalPlaces(),
+            aShareDataSourcePref = appPreferences.aShareDataSourcePref
         )
     }
 

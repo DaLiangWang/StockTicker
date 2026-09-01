@@ -11,7 +11,6 @@ import androidx.navigation.NavHostController
 import androidx.window.layout.DisplayFeature
 import com.github.premnirmal.ticker.home.HomeViewModel
 import com.github.premnirmal.ticker.home.WatchlistScreen
-import com.github.premnirmal.ticker.news.NewsFeedScreen
 import com.github.premnirmal.ticker.portfolio.search.SearchScreen
 import com.github.premnirmal.ticker.settings.SettingsScreen
 import com.github.premnirmal.ticker.ui.LocalContentType
@@ -51,20 +50,6 @@ fun HomeNavHostWrapper(
                 displayFeatures = displayFeatures,
                 contentType = contentType,
                 viewModel = homeViewModel,
-            )
-        },
-        trending = {
-            NewsFeedScreen(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.surface),
-                onQuoteClick = {
-                    rootNavController.navigate("${Graph.QUOTE_DETAIL}/${URLEncoder.encode(it.symbol)}") {
-                        popUpTo(HomeRoute.Trending.route) {
-                            inclusive = true
-                        }
-                    }
-                }
             )
         },
         search = {

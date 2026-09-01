@@ -8,7 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
@@ -76,6 +77,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.github.premnirmal.ticker.navigation.LocalContentBottomPadding
+import com.github.premnirmal.ticker.detail.QUOTE_TABLE_WIDTH
 import com.github.premnirmal.ticker.network.data.Quote
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -117,7 +119,6 @@ fun WatchlistContent(
     quoteCard: @Composable (
         quote: Quote,
         modifier: Modifier,
-        interactionSource: MutableInteractionSource,
         onClick: () -> Unit,
         onRemoveClick: (Quote) -> Unit,
     ) -> Unit,
@@ -293,7 +294,6 @@ private fun Content(
     quoteCard: @Composable (
         quote: Quote,
         modifier: Modifier,
-        interactionSource: MutableInteractionSource,
         onClick: () -> Unit,
         onRemoveClick: (Quote) -> Unit,
     ) -> Unit,
@@ -343,6 +343,7 @@ private fun Content(
                 registerWidgetScroll(index) {
                     lazyStaggeredGridState.animateScrollToItem(0)
                 }
+                val horizontalScrollState = rememberScrollState()
                 PullToRefreshBox(
                     modifier = Modifier
                         .fillMaxSize()
@@ -350,28 +351,38 @@ private fun Content(
                     onRefresh = onRefresh,
                     isRefreshing = isRefreshing
                 ) {
-                    LazyVerticalStaggeredGrid(
+                    // One shared horizontal scroll so every row of the table moves together.
+                    //
+                    // The scroll container needs an explicit, bounded width: the surrounding LazyRow
+                    // measures its pages with an *unbounded* width, so fillMaxWidth() here would hand
+                    // horizontalScroll() infinite constraints and crash. `width` is the page viewport.
+                    Box(
                         modifier = Modifier
                             .width(width)
                             .fillMaxHeight()
-                            .then(listFadingEdges(lazyStaggeredGridState)),
-                        state = lazyStaggeredGridState,
-                        columns = StaggeredGridCells.Adaptive(minSize = 150.dp),
-                        contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = 8.dp + LocalContentBottomPadding.current),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalItemSpacing = 8.dp,
+                            .horizontalScroll(horizontalScrollState),
                     ) {
-                        itemsIndexed(
-                            quotes,
-                            key = { _, quote -> quote.symbol }
-                        ) { _, quote ->
-                            ReorderableItem(reorderableLazyStaggeredGridState, key = quote.symbol) {
-                                val interactionSource = remember { MutableInteractionSource() }
-                                quoteCard(
-                                    quote,
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .longPressDraggableHandle(
+                        LazyVerticalStaggeredGrid(
+                            modifier = Modifier
+                                // At least wide enough for the columns; wider screens stretch the
+                                // name column instead of leaving a gap on the right.
+                                .width(maxOf(QUOTE_TABLE_WIDTH, width))
+                                .fillMaxHeight()
+                                .then(listFadingEdges(lazyStaggeredGridState)),
+                            state = lazyStaggeredGridState,
+                            columns = StaggeredGridCells.Fixed(1),
+                            contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = 8.dp + LocalContentBottomPadding.current),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalItemSpacing = 8.dp,
+                        ) {
+                            itemsIndexed(
+                                quotes,
+                                key = { _, quote -> quote.symbol }
+                            ) { _, quote ->
+                                ReorderableItem(reorderableLazyStaggeredGridState, key = quote.symbol) {
+                                    quoteCard(
+                                        quote,
+                                        Modifier.longPressDraggableHandle(
                                             onDragStarted = {
                                                 hapticFeedback.performHapticFeedback(
                                                     HapticFeedbackType.GestureThresholdActivate
@@ -383,12 +394,11 @@ private fun Content(
                                                 widget.setAutoSort(false)
                                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
                                             },
-                                            interactionSource = interactionSource,
                                         ),
-                                    interactionSource,
-                                    { onQuoteClick(quote) },
-                                    { q -> widget.removeStock(q.symbol) },
-                                )
+                                        { onQuoteClick(quote) },
+                                        { q -> widget.removeStock(q.symbol) },
+                                    )
+                                }
                             }
                         }
                     }

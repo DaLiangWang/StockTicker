@@ -24,7 +24,6 @@ fun HomeNavHost(
     modifier: Modifier = Modifier,
     disableTransitions: Boolean = false,
     watchlist: @Composable () -> Unit,
-    trending: @Composable () -> Unit,
     search: @Composable () -> Unit,
     widgets: @Composable () -> Unit,
     settings: @Composable () -> Unit,
@@ -45,13 +44,6 @@ fun HomeNavHost(
             popEnterTransition = noEnter,
             popExitTransition = noExit,
         ) { watchlist() }
-        composable(
-            HomeRoute.Trending.route,
-            enterTransition = noEnter,
-            exitTransition = noExit,
-            popEnterTransition = noEnter,
-            popExitTransition = noExit,
-        ) { trending() }
         composable(
             HomeRoute.Search.route,
             enterTransition = noEnter,

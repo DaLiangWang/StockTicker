@@ -101,8 +101,6 @@ fun WidgetsScreen(
             autoSortDesc = stringResource(id = R.string.auto_sort_desc),
             layoutType = stringResource(id = R.string.layout_type),
             layoutTypes = stringArrayResource(id = R.array.layout_types),
-            chooseTextSize = stringResource(id = R.string.choose_text_size),
-            fontSizes = stringArrayResource(id = R.array.font_sizes),
             widgetWidth = stringResource(id = R.string.widget_width),
             widgetWidthTypes = stringArrayResource(id = R.array.widget_width_types),
             background = stringResource(id = R.string.bg),
@@ -117,6 +115,12 @@ fun WidgetsScreen(
             showCurrencyDesc = stringResource(id = R.string.setting_currency_desc),
             showRefresh = stringResource(id = R.string.show_refresh),
             showRefreshDesc = stringResource(id = R.string.show_refresh_desc),
+            showMarketValue = stringResource(id = R.string.widget_show_market_value),
+            showMarketValueDesc = stringResource(id = R.string.widget_show_market_value_desc),
+            showTodayGainLoss = stringResource(id = R.string.widget_show_today_gain_loss),
+            showTodayGainLossDesc = stringResource(id = R.string.widget_show_today_gain_loss_desc),
+            showTotalGainLoss = stringResource(id = R.string.widget_show_total_gain_loss),
+            showTotalGainLossDesc = stringResource(id = R.string.widget_show_total_gain_loss_desc),
         ),
         spinnerArrowIcon = painterResource(id = R.drawable.ic_arrow_down),
         doneIcon = painterResource(id = R.drawable.ic_done),
@@ -211,6 +215,9 @@ private class WidgetDataSettings(
     override fun setHideHeader(value: Boolean) = widgetData.setHideHeader(value)
     override fun setCurrencyEnabled(value: Boolean) = widgetData.setCurrencyEnabled(value)
     override fun setShowRefreshButton(value: Boolean) = widgetData.setShowRefreshButton(value)
+    override fun setShowMarketValue(value: Boolean) = widgetData.setShowMarketValue(value)
+    override fun setShowTodayGainLoss(value: Boolean) = widgetData.setShowTodayGainLoss(value)
+    override fun setShowTotalGainLoss(value: Boolean) = widgetData.setShowTotalGainLoss(value)
 }
 
 @Suppress("DEPRECATION")
@@ -226,4 +233,7 @@ private fun WidgetData.Prefs.toWidgetPrefs() = WidgetPrefs(
     hideWidgetHeader = hideWidgetHeader,
     showCurrency = showCurrency,
     showRefreshButton = showRefreshButton,
+    showMarketValue = showMarketValue,
+    showTodayGainLoss = showTodayGainLoss,
+    showTotalGainLoss = showTotalGainLoss,
 )

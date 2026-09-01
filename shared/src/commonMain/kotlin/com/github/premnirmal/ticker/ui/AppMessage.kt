@@ -13,10 +13,4 @@ sealed class AppMessage(
         title: String,
         message: String,
     ) : AppMessage(title, message)
-
-    class BannerMessage(
-        title: String,
-        message: String,
-        onClick: (() -> Unit)? = null,
-    ) : AppMessage(title, message)
 }

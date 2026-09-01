@@ -12,14 +12,9 @@ import androidx.annotation.RequiresApi
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
-import com.github.premnirmal.ticker.components.AppClock.AppClockImpl
-import com.github.premnirmal.ticker.components.todayZoned
 import com.github.premnirmal.tickerwidget.R
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
-import java.time.DayOfWeek
-import java.time.ZonedDateTime
-import java.time.format.TextStyle.SHORT
 import java.util.Date
 import java.util.Locale
 
@@ -80,20 +75,6 @@ fun Context.isNetworkOnline(): Boolean {
     val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
     return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
         capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
-}
-
-fun ZonedDateTime.createTimeString(): String {
-    val fetched: String
-    val fetchedDayOfWeek = dayOfWeek.value
-    val today = AppClockImpl.todayZoned().dayOfWeek.value
-    fetched = if (today == fetchedDayOfWeek) {
-        AppPreferences.TIME_FORMATTER.format(this)
-    } else {
-        val day: String = DayOfWeek.from(this).getDisplayName(SHORT, Locale.getDefault())
-        val timeStr: String = AppPreferences.TIME_FORMATTER.format(this)
-        "$timeStr $day"
-    }
-    return fetched
 }
 
 /**

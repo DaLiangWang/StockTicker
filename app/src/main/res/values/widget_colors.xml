@@ -1,14 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
   <color name="text_widget_header">#aaa</color>
+  <!-- Glance 的 ColorProvider(Int) 取的是 @ColorRes 资源 ID，不是颜色值，
+       所以固定颜色也必须定义成资源再按 ID 引用。 -->
+  <color name="widget_title_white">#FFFFFF</color>
+  <color name="widget_bg_transparent">#00000000</color>
   <color name="widget_text">#1b1b1b</color>
   <color name="widget_text_black">#1b1b1b</color>
   <color name="widget_text_white">#FFFAFF</color>
   <color name="dark_widget_text">#FFFAFF</color>
-  <color name="text_widget_positive">#009900</color>
-  <color name="text_widget_positive_dark">#009900</color>
-  <color name="text_widget_positive_light">#ccff66</color>
-  <color name="text_widget_negative">#ff6666</color>
+  <!-- A-share convention: gains (positive / 涨) print red, losses (negative / 跌) print green. -->
+  <color name="text_widget_positive">#e55b5b</color>
+  <color name="text_widget_positive_dark">#e55b5b</color>
+  <color name="text_widget_positive_light">#ff6666</color>
+  <color name="text_widget_negative">#009900</color>
   <color name="widget_bg">#F2FAF9F6</color>
   <color name="widget_bg_dark">#F21d1d1d</color>
 </resources>

@@ -2,10 +2,8 @@ package com.github.premnirmal.ticker.components
 
 import com.github.premnirmal.ticker.debug.DbViewerViewModel
 import com.github.premnirmal.ticker.home.HomeViewModel
-import com.github.premnirmal.ticker.news.NewsFeedViewModel
 import com.github.premnirmal.ticker.news.QuoteDetailViewModel
 import com.github.premnirmal.ticker.portfolio.AddPositionViewModel
-import com.github.premnirmal.ticker.portfolio.AlertsViewModel
 import com.github.premnirmal.ticker.portfolio.DisplaynameViewModel
 import com.github.premnirmal.ticker.portfolio.NotesViewModel
 import com.github.premnirmal.ticker.portfolio.search.SearchViewModel
@@ -30,24 +28,18 @@ val viewModelModule = module {
             get(),
             get(),
             get(),
-            get(),
-            get(),
-            get(),
-            get(),
             get()
         )
     }
-    viewModel { SettingsViewModel(get(), get(), get(), get()) }
+    viewModel { SettingsViewModel(get(), get(), get()) }
     viewModel { ThemeViewModel(get()) }
     viewModel { DbViewerViewModel(androidApplication(), get(), get(), get()) }
     viewModel { SearchViewModel(get(), get(), get(), get()) }
     viewModel { DisplaynameViewModel(get(), get()) }
-    viewModel { AlertsViewModel(get(), get()) }
     viewModel { NotesViewModel(get(), get()) }
     viewModel { AddPositionViewModel(get()) }
     viewModel {
-        QuoteDetailViewModel(get(), get(), get(), get())
+        QuoteDetailViewModel(get(), get(), get())
     }
-    viewModel { NewsFeedViewModel(get()) }
     viewModel { (symbol: String) -> SuggestionViewModel(symbol, get()) }
 }

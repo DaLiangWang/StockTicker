@@ -9,7 +9,7 @@ package com.github.premnirmal.ticker.model
  * concrete enqueueing is platform-specific (Android uses `AlarmManager` + `WorkManager`; iOS will
  * use `BGTaskScheduler`/`WidgetKit` timelines), but presentation/state code can depend on this
  * abstraction rather than a platform scheduler. It mirrors the existing
- * [com.github.premnirmal.ticker.network.CrumbProvider] split (shared contract in `commonMain`,
+ * [com.github.premnirmal.ticker.repo.QuotesDB] split (shared contract in `commonMain`,
  * platform implementation per target).
  *
  * On Android this is implemented by `AlarmScheduler`; iOS provides its own implementation

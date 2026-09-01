@@ -2,20 +2,17 @@ package com.github.premnirmal.ticker.model
 
 import com.github.premnirmal.ticker.components.AppLogger
 import com.github.premnirmal.ticker.components.ioDispatcher
-import com.github.premnirmal.ticker.network.ChartApi
+import com.github.premnirmal.ticker.network.AShareQuoteApi
 import com.github.premnirmal.ticker.network.data.DataPoint
 import kotlinx.coroutines.withContext
 
 /**
  * Fetches a symbol's chart history for a [Range] and maps it into the shared [ChartData] model.
- * Moved from the Android-only `:app` module into `commonMain`: it no longer depends on `Timber`
- * (now [AppLogger]), `Dispatchers.IO` (now [ioDispatcher]) or Hilt/`javax.inject` (it is now plain
- * and constructed by the platform DI layer, e.g. `:app`'s `NetworkModule`). The public contract
- * (`suspend fun fetchDataByRange(symbol, range): FetchResult<ChartData>`) is unchanged so existing
- * `:app` callers do not need to change.
+ * Charts are served by the domestic (mainland-China) sources via [AShareQuoteApi] (which already
+ * covers A/HK/US instruments), so Yahoo Finance is no longer involved.
  */
 class HistoryProvider(
-    private val chartApi: ChartApi
+    private val aShareQuoteApi: AShareQuoteApi
 ) {
 
     suspend fun fetchDataByRange(
@@ -23,12 +20,11 @@ class HistoryProvider(
         range: Range
     ): FetchResult<ChartData> = withContext(ioDispatcher) {
         val chartData = try {
-            val historicalData =
-                chartApi.fetchChartData(
-                    symbol = symbol,
-                    interval = range.intervalParam(),
-                    range = range.rangeParam()
-                )
+            val historicalData = aShareQuoteApi.getChartData(
+                symbol = symbol,
+                interval = range.intervalParam(),
+                range = range.rangeParam()
+            )
             with(historicalData.chart.result.first()) {
                 val chartPreviousClose = meta.chartPreviousClose.toFloat()
                 val regularMarketPrice = meta.regularMarketPrice.toFloat()

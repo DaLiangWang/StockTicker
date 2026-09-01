@@ -30,20 +30,20 @@ data class Chart(
 data class Meta(
     @SerialName("currency") val currency: String,
     @SerialName("symbol") val symbol: String,
-    @SerialName("exchangeName") val exchangeName: String?,
-    @SerialName("instrumentType") val instrumentType: String?,
-    @SerialName("firstTradeDate") val firstTradeDate: Long?,
-    @SerialName("regularMarketTime") val regularMarketTime: Long?,
-    @SerialName("gmtoffset") val gmtoffset: Long?,
-    @SerialName("timezone") val timezone: String?,
-    @SerialName("exchangeTimezoneName") val exchangeTimezoneName: String?,
+    @SerialName("exchangeName") val exchangeName: String? = null,
+    @SerialName("instrumentType") val instrumentType: String? = null,
+    @SerialName("firstTradeDate") val firstTradeDate: Long? = null,
+    @SerialName("regularMarketTime") val regularMarketTime: Long? = null,
+    @SerialName("gmtoffset") val gmtoffset: Long? = null,
+    @SerialName("timezone") val timezone: String? = null,
+    @SerialName("exchangeTimezoneName") val exchangeTimezoneName: String? = null,
     @SerialName("regularMarketPrice") val regularMarketPrice: Double,
     @SerialName("chartPreviousClose") val chartPreviousClose: Double,
-    @SerialName("priceHint") val priceHint: Long?,
-    @SerialName("currentTradingPeriod") val currentTradingPeriod: CurrentTradingPeriod?,
-    @SerialName("dataGranularity") val dataGranularity: String?,
-    @SerialName("range") val range: String?,
-    @SerialName("validRanges") val validRanges: List<String>?
+    @SerialName("priceHint") val priceHint: Long? = null,
+    @SerialName("currentTradingPeriod") val currentTradingPeriod: CurrentTradingPeriod? = null,
+    @SerialName("dataGranularity") val dataGranularity: String? = null,
+    @SerialName("range") val range: String? = null,
+    @SerialName("validRanges") val validRanges: List<String>? = null
 )
 
 @Serializable

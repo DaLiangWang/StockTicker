@@ -3,6 +3,9 @@ package com.github.premnirmal.ticker.network.data
 import com.github.premnirmal.shared.CommonParcelable
 import com.github.premnirmal.shared.CommonParcelize
 import com.github.premnirmal.ticker.components.AppNumberFormat
+import com.github.premnirmal.ticker.components.percentString
+import com.github.premnirmal.ticker.components.signedPercent
+import com.github.premnirmal.ticker.components.signedValue
 import kotlinx.serialization.Serializable
 
 /**
@@ -74,24 +77,11 @@ data class Quote constructor(
 
     fun changeString(): String = AppNumberFormat.selected.format(change)
 
-    fun changeStringWithSign(): String {
-        val changeString = AppNumberFormat.selected.format(change)
-        if (change >= 0) {
-            return "+$changeString"
-        }
-        return changeString
-    }
+    fun changeStringWithSign(): String = signedValue(change)
 
-    fun changePercentString(): String =
-        "${AppNumberFormat.TWO_DP.format(changeInPercent)}%"
+    fun changePercentString(): String = percentString(changeInPercent)
 
-    fun changePercentStringWithSign(): String {
-        val changeString = "${AppNumberFormat.TWO_DP.format(changeInPercent)}%"
-        if (changeInPercent >= 0) {
-            return "+$changeString"
-        }
-        return changeString
-    }
+    fun changePercentStringWithSign(): String = signedPercent(changeInPercent)
 
     fun dividendInfo(): String {
         return if (annualDividendRate <= 0f || annualDividendYield <= 0f) {
@@ -130,37 +120,16 @@ data class Quote constructor(
 
     fun gainLoss(): Float = holdings() - totalPositionShares() * positionPrice()
 
-    fun gainLossString(): String {
-        val gainLoss = gainLoss()
-        val gainLossString = AppNumberFormat.selected.format(gainLoss)
-        if (gainLoss >= 0) {
-            return "+$gainLossString"
-        }
-        return gainLossString
-    }
+    fun gainLossString(): String = signedValue(gainLoss())
 
     private fun gainLossPercent(): Float {
         if (totalPositionPrice() == 0f) return 0f
         return (gainLoss() / totalPositionPrice()) * 100f
     }
 
-    fun gainLossPercentString(): String {
-        val gainLossPercent = gainLossPercent()
-        val gainLossString = "${AppNumberFormat.TWO_DP.format(gainLossPercent)}%"
-        if (gainLossPercent >= 0) {
-            return "+$gainLossString"
-        }
-        return gainLossString
-    }
+    fun gainLossPercentString(): String = signedPercent(gainLossPercent())
 
-    fun gainLossPercentStringNoPercentSign(): String {
-        val gainLossPercent = gainLossPercent()
-        val gainLossString = "${AppNumberFormat.TWO_DP.format(gainLossPercent)}"
-        if (gainLossPercent >= 0) {
-            return "+$gainLossString"
-        }
-        return gainLossString
-    }
+    fun gainLossPercentStringNoPercentSign(): String = signedValue(gainLossPercent(), AppNumberFormat.TWO_DP)
 
     fun dayChange(): Float = totalPositionShares() * change
 

@@ -9,7 +9,7 @@ import java.util.Locale
 
 private val TIME_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
-internal actual fun formatFetchTime(epochMillis: Long): String {
+actual fun formatFetchTime(epochMillis: Long): String {
     val time = ZonedDateTime.ofInstant(Instant.ofEpochMilli(epochMillis), ZoneId.systemDefault())
     val today = ZonedDateTime.now(ZoneId.systemDefault()).dayOfWeek.value
     return if (today == time.dayOfWeek.value) {

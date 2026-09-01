@@ -12,6 +12,7 @@ plugins {
   alias(libs.plugins.compose.multiplatform)
   alias(libs.plugins.compose.compiler)
   id("kotlin-parcelize")
+  alias(libs.plugins.detekt.plugin)
 }
 
 room {
@@ -84,24 +85,6 @@ kotlin {
     }
   }
 
-  listOf(
-      iosArm64(),
-      iosSimulatorArm64()
-  ).forEach { iosTarget ->
-    iosTarget.binaries.framework {
-      baseName = "Shared"
-      isStatic = true
-      // Embed Kotlin/Native debug information into the framework so Firebase Crashlytics can
-      // symbolicate Kotlin stack frames in iOS crash reports. Because this is a *static* framework
-      // the Kotlin code is linked directly into the app binary (there is no separate Shared.framework
-      // dynamic binary with its own auto-generated .dSYM), so the light debug info has to be added to
-      // the binary here. It then ends up in the app's .dSYM that the Crashlytics build phase uploads,
-      // turning otherwise-unsymbolicated Kotlin frames into readable function names.
-      // See https://kotlinlang.org/docs/native-debugging.html#debug-ios-applications
-      freeCompilerArgs += "-Xadd-light-debug=enable"
-    }
-  }
-
   sourceSets {
     commonMain {
       kotlin.srcDir(generateChangelog)
@@ -132,11 +115,6 @@ kotlin {
     androidMain.dependencies {
       implementation(libs.ktor.client.okhttp)
       implementation(libs.timber)
-    }
-    iosMain.dependencies {
-      implementation(libs.ktor.client.darwin)
-      implementation(libs.kotlinx.datetime)
-      implementation(libs.coil.network.ktor3)
     }
     commonTest.dependencies {
       implementation(kotlin("test"))
@@ -172,6 +150,19 @@ android {
   }
 }
 
+detekt {
+  toolVersion = libs.versions.detekt.get()
+  config.setFrom(files("../config/detekt/detekt.yml", "../config/detekt/detekt-formatting.yml"))
+  baseline = file("../config/detekt/baseline-shared.xml")
+}
+
+// Detekt's Gradle plugin does not auto-discover Kotlin Multiplatform source sets (its `sourceSets`
+// expects JVM `SourceSet`s, which KMP doesn't expose), so the aggregate `:shared:detekt` task is
+// NO-SOURCE by default. Point the Detekt task's `source` at the actual shared source directories.
+tasks.withType<io.gitlab.arturbosch.detekt.Detekt>().configureEach {
+  source = fileTree("src/commonMain/kotlin") + fileTree("src/androidMain/kotlin")
+}
+
 // CMP navigation-compose is pinned to the stable 2.9.2 line (see gradle/libs.versions.toml),
 // which pulls androidx.navigation:*:2.9.x for Android. Guard against any transitive bump to the
 // 2.10.x pre-release line (which requires compileSdk 37 + AGP 9.x) by forcing it back to the
@@ -189,6 +180,6 @@ configurations.matching { it.name.contains("Android") || it.name.contains("andro
 // (the @Database/@Dao/@Entity declarations live in commonMain).
 dependencies {
   add("kspAndroid", libs.room.compiler)
-  add("kspIosArm64", libs.room.compiler)
-  add("kspIosSimulatorArm64", libs.room.compiler)
+  detektPlugins(libs.detekt.formatting)
+  detektPlugins(libs.detekt.compose)
 }

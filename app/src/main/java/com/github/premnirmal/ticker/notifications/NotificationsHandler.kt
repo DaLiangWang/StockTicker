@@ -17,6 +17,7 @@ import androidx.core.app.TaskStackBuilder
 import androidx.core.content.edit
 import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.components.AppClock
+import com.github.premnirmal.ticker.components.AppNumberFormat
 import com.github.premnirmal.ticker.components.todayLocal
 import com.github.premnirmal.ticker.hasNotificationPermission
 import com.github.premnirmal.ticker.home.HomeActivity
@@ -120,7 +121,7 @@ class NotificationsHandler constructor(
         }
         if (VERSION.SDK_INT >= VERSION_CODES.O) {
             notificationManager.deleteNotificationChannel(CHANNEL_ID_ALERTS)
-            with("Alerts") {
+            with(context.getString(R.string.notification_channel_alerts_name)) {
                 val name = this
                 val descriptionText = context.getString(R.string.desc_channel_alerts)
                 val channelGroup = NotificationChannelGroupCompat.Builder(
@@ -129,7 +130,7 @@ class NotificationsHandler constructor(
                 // Register the channel group with the system
                 notificationManager.createNotificationChannelGroup(channelGroup)
             }
-            with("Summary") {
+            with(context.getString(R.string.notification_channel_summary_name)) {
                 val name = this
                 val descriptionText = context.getString(R.string.desc_channel_summary)
                 val importance = NotificationManager.IMPORTANCE_DEFAULT
@@ -275,14 +276,14 @@ private class NotificationFactory(
         val title = context.getString(
             R.string.alert_above_notification_title,
             quote.symbol,
-            appPreferences.selectedDecimalFormat.format(quote.properties!!.alertAbove),
-            appPreferences.selectedDecimalFormat.format(quote.lastTradePrice)
+            AppNumberFormat.selected.format(quote.properties!!.alertAbove),
+            AppNumberFormat.selected.format(quote.lastTradePrice)
         )
         val text = context.getString(
             R.string.alert_above_notification,
             quote.name,
-            appPreferences.selectedDecimalFormat.format(quote.properties!!.alertAbove),
-            appPreferences.selectedDecimalFormat.format(quote.lastTradePrice)
+            AppNumberFormat.selected.format(quote.properties!!.alertAbove),
+            AppNumberFormat.selected.format(quote.lastTradePrice)
         )
         sendNotification(quote, title, text)
     }
@@ -293,14 +294,14 @@ private class NotificationFactory(
         val title = context.getString(
             R.string.alert_below_notification_title,
             quote.symbol,
-            appPreferences.selectedDecimalFormat.format(quote.properties!!.alertBelow),
-            appPreferences.selectedDecimalFormat.format(quote.lastTradePrice)
+            AppNumberFormat.selected.format(quote.properties!!.alertBelow),
+            AppNumberFormat.selected.format(quote.lastTradePrice)
         )
         val text = context.getString(
             R.string.alert_below_notification,
             quote.name,
-            appPreferences.selectedDecimalFormat.format(quote.properties!!.alertBelow),
-            appPreferences.selectedDecimalFormat.format(quote.lastTradePrice)
+            AppNumberFormat.selected.format(quote.properties!!.alertBelow),
+            AppNumberFormat.selected.format(quote.lastTradePrice)
         )
         sendNotification(quote, title, text)
     }

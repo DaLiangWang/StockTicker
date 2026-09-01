@@ -7,8 +7,8 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import androidx.glance.state.GlanceStateDefinition
-import com.github.premnirmal.ticker.createTimeString
 import com.github.premnirmal.ticker.model.FetchState
+import com.github.premnirmal.ticker.model.formatFetchTime
 import com.github.premnirmal.ticker.network.data.Quote
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
@@ -16,9 +16,6 @@ import kotlinx.serialization.json.Json
 import java.io.File
 import java.io.InputStream
 import java.io.OutputStream
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
 
 /**
  * Glance state that holds both widget configuration and stock quotes.
@@ -64,6 +61,12 @@ data class SerializableWidgetState(
     val textColor: Int = 0,
     val isRefreshing: Boolean = false,
     val showRefreshButton: Boolean = false,
+    /** Whether the portfolio summary row shows the current market value (当前市值). */
+    val showMarketValue: Boolean = true,
+    /** Whether the portfolio summary row shows today's P&L (今日盈亏). */
+    val showTodayGainLoss: Boolean = true,
+    /** Whether the portfolio summary row shows the accumulated P&L (累计盈亏). */
+    val showTotalGainLoss: Boolean = true,
     val fetchState: SerializableFetchState = SerializableFetchState.NotFetched,
 ) {
     fun getChangeColor(change: Float, changeInPercent: Float): Int {
@@ -97,6 +100,9 @@ data class SerializableWidgetState(
                 negativeTextColor = state.negativeTextColor,
                 textColor = state.textColor,
                 showRefreshButton = state.showRefreshButton,
+                showMarketValue = state.showMarketValue,
+                showTodayGainLoss = state.showTodayGainLoss,
+                showTotalGainLoss = state.showTotalGainLoss,
                 isRefreshing = isRefreshing,
                 fetchState = SerializableFetchState.from(fetchState),
             )
@@ -150,11 +156,7 @@ sealed class SerializableFetchState {
     @Serializable
     data class Success(val fetchTime: Long) : SerializableFetchState() {
 
-        override val displayString: String by lazy {
-            val instant = Instant.ofEpochMilli(fetchTime)
-            val time = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault())
-            time.createTimeString()
-        }
+        override val displayString: String by lazy { formatFetchTime(fetchTime) }
     }
 
     @Serializable

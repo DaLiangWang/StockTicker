@@ -1,13 +1,8 @@
 package com.github.premnirmal.ticker.network
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.mock.MockEngine
-import io.ktor.client.engine.mock.respond
-import io.ktor.client.engine.mock.respondError
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.headersOf
-import io.ktor.http.HttpHeaders
-import io.ktor.http.ContentType
+import com.github.premnirmal.ticker.network.data.HistoricalDataResult
+import com.github.premnirmal.ticker.network.data.Quote
+import com.github.premnirmal.ticker.network.data.SuggestionsNet.SuggestionNet
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -16,63 +11,31 @@ import kotlin.test.assertTrue
 
 class StocksApiTest {
 
-    private class FakeCrumbStore(private var stored: String? = null) : CrumbStore {
-        override fun getCrumb(): String? = stored
-        override fun setCrumb(crumb: String?) {
-            stored = crumb
-        }
+    /**
+     * Stands in for the Tencent/East Money clients. [quotes] and [suggestions] default to a happy
+     * path and can be replaced with throwing/empty implementations to exercise the failure paths.
+     */
+    private class FakeAShareQuoteApi(
+        private val quotes: (List<String>) -> List<Quote> = { symbols -> symbols.map { Quote(symbol = it) } },
+        private val suggestions: (String) -> List<SuggestionNet> = { emptyList() },
+    ) : AShareQuoteApi {
+
+        override suspend fun getQuotes(symbols: List<String>): List<Quote> = quotes(symbols)
+
+        override suspend fun getSuggestions(query: String): List<SuggestionNet> = suggestions(query)
+
+        override suspend fun getChartData(
+            symbol: String,
+            interval: String,
+            range: String,
+        ): HistoricalDataResult = error("charts are not exercised here")
     }
 
-    private val jsonHeaders =
-        headersOf(HttpHeaders.ContentType, ContentType.Application.Json.toString())
-
-    private fun quotesJson(vararg symbols: String): String {
-        val results = symbols.joinToString(separator = ",") { symbol ->
-            """{"region":"US","quoteType":"EQUITY","symbol":"$symbol",""" +
-                """"regularMarketPrice":1.0,"regularMarketChange":0.1,""" +
-                """"regularMarketChangePercent":0.5}"""
-        }
-        return """{"quoteResponse":{"result":[$results]}}"""
-    }
-
-    private fun jsonClient(engine: MockEngine): HttpClient = HttpClient(engine) {
-        installDefaults()
-    }
-
-    private fun yahooFinance(engine: MockEngine) =
-        YahooFinanceApi(baseUrl = "https://query1.finance.yahoo.com/v7/finance/quote", httpClient = jsonClient(engine))
-
-    private fun initialLoad(engine: MockEngine) =
-        YahooFinanceInitialLoadApi(baseUrl = "https://finance.yahoo.com/", httpClient = jsonClient(engine))
-
-    private fun crumbApi(engine: MockEngine) =
-        YahooCrumbApi(baseUrl = "https://query1.finance.yahoo.com/", httpClient = jsonClient(engine))
-
-    private fun suggestionApi(engine: MockEngine) =
-        SuggestionApi(baseUrl = "https://query2.finance.yahoo.com/v1/finance/", httpClient = jsonClient(engine))
-
-    private fun unusedEngine() = MockEngine { respond("{}", HttpStatusCode.OK, jsonHeaders) }
-
-    private fun stocksApi(
-        yahooEngine: MockEngine,
-        crumbStore: CrumbStore = FakeCrumbStore(),
-        initialLoadEngine: MockEngine = unusedEngine(),
-        crumbEngine: MockEngine = unusedEngine(),
-        suggestionEngine: MockEngine = unusedEngine()
-    ) = StocksApi(
-        yahooFinanceInitialLoad = initialLoad(initialLoadEngine),
-        yahooFinanceCrumb = crumbApi(crumbEngine),
-        yahooFinance = yahooFinance(yahooEngine),
-        crumbStore = crumbStore,
-        suggestionApi = suggestionApi(suggestionEngine)
-    )
+    private fun api(fake: AShareQuoteApi = FakeAShareQuoteApi()) = StocksApi(aShareQuoteApi = fake)
 
     @Test
     fun getStocksReturnsQuotesOnSuccess() = runTest {
-        val engine = MockEngine { respond(quotesJson("AAPL", "MSFT"), HttpStatusCode.OK, jsonHeaders) }
-        val api = stocksApi(engine)
-
-        val result = api.getStocks(listOf("AAPL", "MSFT"))
+        val result = api().getStocks(listOf("AAPL", "MSFT"))
 
         assertTrue(result.wasSuccessful)
         assertEquals(listOf("AAPL", "MSFT"), result.data.map { it.symbol })
@@ -80,43 +43,57 @@ class StocksApiTest {
 
     @Test
     fun getStocksOrdersResultsByRequestedTickers() = runTest {
-        // Server returns results out of order; StocksApi should reorder to match the request.
-        val engine = MockEngine { respond(quotesJson("MSFT", "AAPL"), HttpStatusCode.OK, jsonHeaders) }
-        val api = stocksApi(engine)
+        // The source returns results out of order; StocksApi must reorder them to match the request.
+        val fake = FakeAShareQuoteApi(
+            quotes = { symbols -> symbols.reversed().map { Quote(symbol = it) } }
+        )
 
-        val result = api.getStocks(listOf("AAPL", "MSFT"))
+        val result = api(fake).getStocks(listOf("AAPL", "MSFT"))
 
         assertEquals(listOf("AAPL", "MSFT"), result.data.map { it.symbol })
     }
 
     @Test
-    fun getStocksReturnsFailureWhenRequestThrows() = runTest {
-        val engine = MockEngine { respondError(HttpStatusCode.InternalServerError) }
-        val api = stocksApi(engine)
+    fun getStocksResolvesBareAShareCodes() = runTest {
+        // A CSV import stores bare A-share codes (600022) while search stores the canonical
+        // `sh`/`sz` form. Sources echo back whichever spelling we sent, so the bare codes must still
+        // resolve — keying the result by the raw symbol dropped them and left the watchlist at 0.
+        val fake = FakeAShareQuoteApi(
+            quotes = { symbols -> symbols.map { Quote(symbol = it, lastTradePrice = 12.5f) } }
+        )
 
-        val result = api.getStocks(listOf("AAPL"))
+        val result = api(fake).getStocks(listOf("600022", "002756", "sz000001"))
 
-        assertFalse(result.wasSuccessful)
-        assertTrue(result.hasError)
+        assertTrue(result.wasSuccessful)
+        assertEquals(listOf("600022", "002756", "sz000001"), result.data.map { it.symbol })
+        assertEquals(listOf(12.5f, 12.5f, 12.5f), result.data.map { it.lastTradePrice })
+    }
+
+    @Test
+    fun getStocksDegradesToEmptySuccessWhenSourceThrows() = runTest {
+        // fetchQuotes swallows a source failure and yields no quotes, so the batch reports an empty
+        // success instead of failing the whole refresh.
+        val fake = FakeAShareQuoteApi(quotes = { error("source unavailable") })
+
+        val result = api(fake).getStocks(listOf("AAPL"))
+
+        assertTrue(result.wasSuccessful)
+        assertTrue(result.data.isEmpty())
     }
 
     @Test
     fun getStockReturnsQuoteOnSuccess() = runTest {
-        val engine = MockEngine { respond(quotesJson("AAPL"), HttpStatusCode.OK, jsonHeaders) }
-        val api = stocksApi(engine)
-
-        val result = api.getStock("AAPL")
+        val result = api().getStock("AAPL")
 
         assertTrue(result.wasSuccessful)
         assertEquals("AAPL", result.data.symbol)
     }
 
     @Test
-    fun getStockReturnsFailureWhenRequestThrows() = runTest {
-        val engine = MockEngine { respondError(HttpStatusCode.InternalServerError) }
-        val api = stocksApi(engine)
+    fun getStockReturnsFailureWhenSourceHasNoQuote() = runTest {
+        val fake = FakeAShareQuoteApi(quotes = { emptyList() })
 
-        val result = api.getStock("AAPL")
+        val result = api(fake).getStock("AAPL")
 
         assertFalse(result.wasSuccessful)
         assertTrue(result.hasError)
@@ -124,157 +101,35 @@ class StocksApiTest {
 
     @Test
     fun getSuggestionsReturnsResultsOnSuccess() = runTest {
-        val suggestionsJson =
-            """{"count":2,"quotes":[{"symbol":"AAPL","shortname":"Apple Inc"},""" +
-                """{"symbol":"AMZN","shortname":"Amazon"}]}"""
-        val suggestionEngine = MockEngine { respond(suggestionsJson, HttpStatusCode.OK, jsonHeaders) }
-        val api = stocksApi(yahooEngine = unusedEngine(), suggestionEngine = suggestionEngine)
+        val fake = FakeAShareQuoteApi(
+            suggestions = { listOf(SuggestionNet("AAPL"), SuggestionNet("AMZN")) }
+        )
 
-        val result = api.getSuggestions("a")
+        val result = api(fake).getSuggestions("a")
 
         assertTrue(result.wasSuccessful)
         assertEquals(listOf("AAPL", "AMZN"), result.data.map { it.symbol })
     }
 
     @Test
-    fun getSuggestionsReturnsFailureWhenRequestThrows() = runTest {
-        val suggestionEngine = MockEngine { respondError(HttpStatusCode.InternalServerError) }
-        val api = stocksApi(yahooEngine = unusedEngine(), suggestionEngine = suggestionEngine)
+    fun getSuggestionsReturnsFailureWhenSourceThrows() = runTest {
+        val fake = FakeAShareQuoteApi(suggestions = { error("source unavailable") })
 
-        val result = api.getSuggestions("a")
+        val result = api(fake).getSuggestions("a")
 
         assertFalse(result.wasSuccessful)
         assertTrue(result.hasError)
     }
 
     @Test
-    fun getStocksBootstrapsCrumbAndRetriesWhenFirstResponseIsEmptyWithNoCrumb() = runTest {
-        // Cold launch on iOS: no crumb stored yet. The first quote request succeeds at the HTTP level
-        // (200) but comes back with an empty quote list because the crumb/consent session is not yet
-        // established. The api must fetch the crumb and retry once so the data loads on the first try.
-        var yahooCalls = 0
-        val yahooEngine = MockEngine {
-            yahooCalls++
-            if (yahooCalls == 1) {
-                respond(quotesJson(), HttpStatusCode.OK, jsonHeaders)
-            } else {
-                respond(quotesJson("AAPL"), HttpStatusCode.OK, jsonHeaders)
-            }
-        }
-        val initialLoadEngine = MockEngine { respond("<html>no token here</html>", HttpStatusCode.OK) }
-        val crumbEngine = MockEngine { respond("fresh-crumb", HttpStatusCode.OK) }
-        val crumbStore = FakeCrumbStore(stored = null)
+    fun getSuggestionsKeepsLocalAShareMatchWhenSourceThrows() = runTest {
+        // A complete A-share code resolves locally, so it is still offered when the remote search
+        // fails — the local hit means the request is not reported as a failure.
+        val fake = FakeAShareQuoteApi(suggestions = { error("source unavailable") })
 
-        val api = stocksApi(
-            yahooEngine = yahooEngine,
-            crumbStore = crumbStore,
-            initialLoadEngine = initialLoadEngine,
-            crumbEngine = crumbEngine
-        )
-
-        val result = api.getStocks(listOf("AAPL"))
+        val result = api(fake).getSuggestions("600519")
 
         assertTrue(result.wasSuccessful)
-        assertEquals(listOf("AAPL"), result.data.map { it.symbol })
-        assertEquals("fresh-crumb", crumbStore.getCrumb())
-        assertEquals(2, yahooCalls)
-    }
-
-    @Test
-    fun getStocksRetriesAcrossMultipleCrumbBootstrapCyclesOn401() = runTest {
-        // Real-world cold launch: the first crumb bootstrap cycle goes through the cookie-consent path
-        // which fails (no crumb stored), and only a second cycle through the plain finance.yahoo.com
-        // page stores a crumb. The quote request must keep retrying until the crumb that is finally
-        // stored is actually used, instead of giving up after a single retry.
-        var yahooCalls = 0
-        val yahooEngine = MockEngine {
-            yahooCalls++
-            // Unauthorized until a crumb has actually been stored (third quote request).
-            if (yahooCalls < 3) {
-                respondError(HttpStatusCode.Unauthorized)
-            } else {
-                respond(quotesJson("AAPL"), HttpStatusCode.OK, jsonHeaders)
-            }
-        }
-        val initialLoadEngine = MockEngine { respond("<html>no token here</html>", HttpStatusCode.OK) }
-        var crumbCalls = 0
-        val crumbEngine = MockEngine {
-            crumbCalls++
-            // First bootstrap cycle fails to produce a crumb; the second one succeeds.
-            if (crumbCalls == 1) {
-                respondError(HttpStatusCode.MethodNotAllowed)
-            } else {
-                respond("fresh-crumb", HttpStatusCode.OK)
-            }
-        }
-        val crumbStore = FakeCrumbStore(stored = "stale-crumb")
-
-        val api = stocksApi(
-            yahooEngine = yahooEngine,
-            crumbStore = crumbStore,
-            initialLoadEngine = initialLoadEngine,
-            crumbEngine = crumbEngine
-        )
-
-        val result = api.getStocks(listOf("AAPL"))
-
-        assertTrue(result.wasSuccessful)
-        assertEquals(listOf("AAPL"), result.data.map { it.symbol })
-        assertEquals("fresh-crumb", crumbStore.getCrumb())
-        assertEquals(3, yahooCalls)
-    }
-
-    @Test
-    fun getStocksDoesNotRetryOnEmptyResponseWhenCrumbAlreadyPresent() = runTest {
-        // A genuinely empty result (e.g. invalid symbols) when a crumb is already stored must not loop
-        // or trigger an extra crumb refresh: only one quote request should be made.
-        var yahooCalls = 0
-        val yahooEngine = MockEngine {
-            yahooCalls++
-            respond(quotesJson(), HttpStatusCode.OK, jsonHeaders)
-        }
-        val crumbStore = FakeCrumbStore(stored = "existing-crumb")
-
-        val api = stocksApi(yahooEngine = yahooEngine, crumbStore = crumbStore)
-
-        val result = api.getStocks(listOf("AAPL"))
-
-        assertTrue(result.wasSuccessful)
-        assertTrue(result.data.isEmpty())
-        assertEquals(1, yahooCalls)
-        assertEquals("existing-crumb", crumbStore.getCrumb())
-    }
-
-    @Test
-    fun getStocksRefreshesCrumbAndRetriesOn401() = runTest {
-        var yahooCalls = 0
-        val yahooEngine = MockEngine {
-            yahooCalls++
-            // First quote request is unauthorized; after the crumb refresh the retry succeeds.
-            if (yahooCalls == 1) {
-                respondError(HttpStatusCode.Unauthorized)
-            } else {
-                respond(quotesJson("AAPL"), HttpStatusCode.OK, jsonHeaders)
-            }
-        }
-        // Initial load HTML has no csrfToken, so cookie-consent is skipped and the crumb is fetched.
-        val initialLoadEngine = MockEngine { respond("<html>no token here</html>", HttpStatusCode.OK) }
-        val crumbEngine = MockEngine { respond("fresh-crumb", HttpStatusCode.OK) }
-        val crumbStore = FakeCrumbStore(stored = "stale-crumb")
-
-        val api = stocksApi(
-            yahooEngine = yahooEngine,
-            crumbStore = crumbStore,
-            initialLoadEngine = initialLoadEngine,
-            crumbEngine = crumbEngine
-        )
-
-        val result = api.getStocks(listOf("AAPL"))
-
-        assertTrue(result.wasSuccessful)
-        assertEquals(listOf("AAPL"), result.data.map { it.symbol })
-        // The 401 cleared the stale crumb and loadCrumb persisted the freshly fetched one.
-        assertEquals("fresh-crumb", crumbStore.getCrumb())
-        assertEquals(2, yahooCalls)
+        assertTrue(result.data.isNotEmpty())
     }
 }

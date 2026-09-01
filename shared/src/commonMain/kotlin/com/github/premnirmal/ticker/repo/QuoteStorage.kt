@@ -16,7 +16,7 @@ import com.github.premnirmal.ticker.network.data.Quote
  * is provided per target via `expect`/`actual`, so both Android and iOS share the same storage code.
  * It mirrors the existing
  * [com.github.premnirmal.ticker.model.RefreshScheduler] and
- * [com.github.premnirmal.ticker.network.CrumbProvider] splits (shared contract in `commonMain`,
+ * [com.github.premnirmal.ticker.repo.QuotesDB] splits (shared contract in `commonMain`,
  * platform glue per target).
  *
  * Implemented by the shared [StocksStorage]. Operations that take/return platform-only types

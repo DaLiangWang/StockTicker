@@ -63,6 +63,14 @@ class FakeUserPreferences : UserPreferences {
         }
     override val themePrefFlow: Flow<Int> = _themePref
 
+    private val _aShareDataSource = MutableStateFlow(UserPreferences.A_SHARE_SOURCE_TENCENT)
+    override var aShareDataSourcePref: Int
+        get() = _aShareDataSource.value
+        set(value) {
+            _aShareDataSource.value = value
+        }
+    override val aShareDataSourceFlow: Flow<Int> = _aShareDataSource
+
     private val _showAddRemoveTooltip = MutableStateFlow(true)
     override val showAddRemoveTooltip: Flow<Boolean> = _showAddRemoveTooltip
     var addRemoveTooltipShownCount: Int = 0

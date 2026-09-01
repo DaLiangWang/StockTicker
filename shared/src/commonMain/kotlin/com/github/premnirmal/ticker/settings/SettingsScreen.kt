@@ -58,10 +58,6 @@ fun SettingsScreen(
     settingsData: SettingsData,
     // Strings
     settingsTitle: String,
-    whatsNewTitle: String,
-    whatsNewSubtitle: String,
-    tutorialTitle: String,
-    tutorialSubtitle: String,
     appThemeTitle: String,
     updateIntervalTitle: String,
     startTimeTitle: String,
@@ -71,20 +67,10 @@ fun SettingsScreen(
     autoSortSubtitle: String,
     roundTwoDpTitle: String,
     roundTwoDpSubtitle: String,
-    notificationAlertsTitle: String,
-    notificationAlertsSubtitle: String,
     shareTitle: String,
-    importTitle: String,
-    importSubtitle: String,
     exportTitle: String,
     exportSubtitle: String,
-    reportBugTitle: String,
-    reportBugSubtitle: String,
-    featureRequestTitle: String,
-    featureRequestSubtitle: String,
-    privacyPolicyTitle: String,
     openSourceText: String,
-    versionName: String,
     confirmLabel: String,
     dismissLabel: String,
     // String arrays
@@ -92,8 +78,6 @@ fun SettingsScreen(
     syncPeriods: Array<String>,
     days: Array<String>,
     // Callbacks
-    onWhatsNew: () -> Unit,
-    onTutorial: () -> Unit,
     onThemeSelected: (Int) -> Unit,
     onUpdateIntervalSelected: (Int) -> Unit,
     onStartTimeSet: (time: String, hour: Int, minute: Int) -> Unit,
@@ -101,15 +85,18 @@ fun SettingsScreen(
     onUpdateDaysSelected: (Set<Int>) -> Unit,
     onAutoSortChanged: (Boolean) -> Unit,
     onRoundToTwoDpChanged: (Boolean) -> Unit,
-    onNotificationAlertsChanged: (Boolean) -> Unit,
     onSharePortfolio: () -> Unit,
-    onImportPortfolio: () -> Unit,
+    onImportPositions: () -> Unit,
     onExportPortfolio: () -> Unit,
-    onReportBug: () -> Unit,
-    onFeatureRequest: () -> Unit,
-    onPrivacyPolicy: () -> Unit,
+    onAShareDataSourceSelected: (Int) -> Unit = {},
     onOpenSource: () -> Unit,
-    onVersionTap: (Offset) -> Unit,
+    // Strings (optional additions — hosts that do not wire the feature pass nothing)
+    importPositionsTitle: String = "",
+    importPositionsSubtitle: String = "",
+    importPositionsTemplateTitle: String = "",
+    onCopyTemplate: () -> Unit = {},
+    aShareDataSourceTitle: String = "",
+    aShareDataSources: Array<String> = emptyArray(),
     // Slots & modifiers
     modifier: Modifier = Modifier,
     showAlarmPermissionRequest: Boolean = false,
@@ -153,10 +140,6 @@ fun SettingsScreen(
             }
             settingsItems(
                 settingsData = settingsData,
-                whatsNewTitle = whatsNewTitle,
-                whatsNewSubtitle = whatsNewSubtitle,
-                tutorialTitle = tutorialTitle,
-                tutorialSubtitle = tutorialSubtitle,
                 appThemeTitle = appThemeTitle,
                 updateIntervalTitle = updateIntervalTitle,
                 startTimeTitle = startTimeTitle,
@@ -166,27 +149,15 @@ fun SettingsScreen(
                 autoSortSubtitle = autoSortSubtitle,
                 roundTwoDpTitle = roundTwoDpTitle,
                 roundTwoDpSubtitle = roundTwoDpSubtitle,
-                notificationAlertsTitle = notificationAlertsTitle,
-                notificationAlertsSubtitle = notificationAlertsSubtitle,
                 shareTitle = shareTitle,
-                importTitle = importTitle,
-                importSubtitle = importSubtitle,
                 exportTitle = exportTitle,
                 exportSubtitle = exportSubtitle,
-                reportBugTitle = reportBugTitle,
-                reportBugSubtitle = reportBugSubtitle,
-                featureRequestTitle = featureRequestTitle,
-                featureRequestSubtitle = featureRequestSubtitle,
-                privacyPolicyTitle = privacyPolicyTitle,
                 openSourceText = openSourceText,
-                versionName = versionName,
                 confirmLabel = confirmLabel,
                 dismissLabel = dismissLabel,
                 themes = themes,
                 syncPeriods = syncPeriods,
                 days = days,
-                onWhatsNew = onWhatsNew,
-                onTutorial = onTutorial,
                 onThemeSelected = onThemeSelected,
                 onUpdateIntervalSelected = onUpdateIntervalSelected,
                 onStartTimeSet = onStartTimeSet,
@@ -194,17 +165,18 @@ fun SettingsScreen(
                 onUpdateDaysSelected = onUpdateDaysSelected,
                 onAutoSortChanged = onAutoSortChanged,
                 onRoundToTwoDpChanged = onRoundToTwoDpChanged,
-                onNotificationAlertsChanged = onNotificationAlertsChanged,
                 onSharePortfolio = onSharePortfolio,
-                onImportPortfolio = onImportPortfolio,
+                onImportPositions = onImportPositions,
                 onExportPortfolio = onExportPortfolio,
-                onReportBug = onReportBug,
-                onFeatureRequest = onFeatureRequest,
-                onPrivacyPolicy = onPrivacyPolicy,
+                onAShareDataSourceSelected = onAShareDataSourceSelected,
+                importPositionsTitle = importPositionsTitle,
+                importPositionsSubtitle = importPositionsSubtitle,
+                importPositionsTemplateTitle = importPositionsTemplateTitle,
+                onCopyTemplate = onCopyTemplate,
+                aShareDataSourceTitle = aShareDataSourceTitle,
+                aShareDataSources = aShareDataSources,
                 onOpenSource = onOpenSource,
-                onVersionTap = onVersionTap,
                 divider = divider,
-                versionFontFamily = versionFontFamily,
                 openSourceFontFamily = openSourceFontFamily,
             )
         }
@@ -214,10 +186,6 @@ fun SettingsScreen(
 @Suppress("LongMethod", "LongParameterList")
 private fun LazyListScope.settingsItems(
     settingsData: SettingsData,
-    whatsNewTitle: String,
-    whatsNewSubtitle: String,
-    tutorialTitle: String,
-    tutorialSubtitle: String,
     appThemeTitle: String,
     updateIntervalTitle: String,
     startTimeTitle: String,
@@ -227,27 +195,15 @@ private fun LazyListScope.settingsItems(
     autoSortSubtitle: String,
     roundTwoDpTitle: String,
     roundTwoDpSubtitle: String,
-    notificationAlertsTitle: String,
-    notificationAlertsSubtitle: String,
     shareTitle: String,
-    importTitle: String,
-    importSubtitle: String,
     exportTitle: String,
     exportSubtitle: String,
-    reportBugTitle: String,
-    reportBugSubtitle: String,
-    featureRequestTitle: String,
-    featureRequestSubtitle: String,
-    privacyPolicyTitle: String,
     openSourceText: String,
-    versionName: String,
     confirmLabel: String,
     dismissLabel: String,
     themes: Array<String>,
     syncPeriods: Array<String>,
     days: Array<String>,
-    onWhatsNew: () -> Unit,
-    onTutorial: () -> Unit,
     onThemeSelected: (Int) -> Unit,
     onUpdateIntervalSelected: (Int) -> Unit,
     onStartTimeSet: (time: String, hour: Int, minute: Int) -> Unit,
@@ -255,39 +211,20 @@ private fun LazyListScope.settingsItems(
     onUpdateDaysSelected: (Set<Int>) -> Unit,
     onAutoSortChanged: (Boolean) -> Unit,
     onRoundToTwoDpChanged: (Boolean) -> Unit,
-    onNotificationAlertsChanged: (Boolean) -> Unit,
     onSharePortfolio: () -> Unit,
-    onImportPortfolio: () -> Unit,
+    onImportPositions: () -> Unit,
     onExportPortfolio: () -> Unit,
-    onReportBug: () -> Unit,
-    onFeatureRequest: () -> Unit,
-    onPrivacyPolicy: () -> Unit,
+    onAShareDataSourceSelected: (Int) -> Unit,
+    importPositionsTitle: String,
+    importPositionsSubtitle: String,
+    importPositionsTemplateTitle: String,
+    onCopyTemplate: () -> Unit,
+    aShareDataSourceTitle: String,
+    aShareDataSources: Array<String>,
     onOpenSource: () -> Unit,
-    onVersionTap: (Offset) -> Unit,
     divider: @Composable () -> Unit,
-    versionFontFamily: FontFamily?,
     openSourceFontFamily: FontFamily?,
 ) {
-    item {
-        SettingsText(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onWhatsNew() },
-            title = whatsNewTitle,
-            subtitle = whatsNewSubtitle,
-        )
-        divider()
-    }
-    item {
-        SettingsText(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onTutorial() },
-            title = tutorialTitle,
-            subtitle = tutorialSubtitle,
-        )
-        divider()
-    }
     item {
         ListPreference(
             title = appThemeTitle,
@@ -362,15 +299,6 @@ private fun LazyListScope.settingsItems(
         divider()
     }
     item {
-        CheckboxPreference(
-            title = notificationAlertsTitle,
-            subtitle = notificationAlertsSubtitle,
-            checked = settingsData.notificationAlerts,
-            onCheckChanged = onNotificationAlertsChanged,
-        )
-        divider()
-    }
-    item {
         SettingsText(
             modifier = Modifier
                 .fillMaxWidth()
@@ -379,15 +307,28 @@ private fun LazyListScope.settingsItems(
         )
         divider()
     }
-    item {
-        SettingsText(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onImportPortfolio() },
-            title = importTitle,
-            subtitle = importSubtitle,
-        )
-        divider()
+    if (importPositionsTitle.isNotEmpty()) {
+        item {
+            SettingsText(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onImportPositions() },
+                title = importPositionsTitle,
+                subtitle = importPositionsSubtitle,
+            )
+            divider()
+        }
+    }
+    if (importPositionsTemplateTitle.isNotEmpty()) {
+        item {
+            SettingsText(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onCopyTemplate() },
+                title = importPositionsTemplateTitle,
+            )
+            divider()
+        }
     }
     item {
         SettingsText(
@@ -399,34 +340,16 @@ private fun LazyListScope.settingsItems(
         )
         divider()
     }
-    item {
-        SettingsText(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onReportBug() },
-            title = reportBugTitle,
-            subtitle = reportBugSubtitle,
-        )
-        divider()
-    }
-    item {
-        SettingsText(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onFeatureRequest() },
-            title = featureRequestTitle,
-            subtitle = featureRequestSubtitle,
-        )
-        divider()
-    }
-    item {
-        SettingsText(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onPrivacyPolicy() },
-            title = privacyPolicyTitle,
-        )
-        divider()
+    if (aShareDataSourceTitle.isNotEmpty() && aShareDataSources.isNotEmpty()) {
+        item {
+            ListPreference(
+                title = aShareDataSourceTitle,
+                items = aShareDataSources,
+                selected = settingsData.aShareDataSourcePref,
+                onSelected = onAShareDataSourceSelected,
+            )
+            divider()
+        }
     }
     item {
         Box(
@@ -448,22 +371,5 @@ private fun LazyListScope.settingsItems(
             )
         }
         divider()
-    }
-    item {
-        Text(
-            modifier = Modifier
-                .fillMaxWidth()
-                .pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = onVersionTap
-                    )
-                }
-                .padding(8.dp),
-            text = versionName,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.primary,
-            fontFamily = versionFontFamily,
-        )
     }
 }

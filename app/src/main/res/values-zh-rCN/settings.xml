@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+
+  <string-array name="font_sizes">
+    <item>极小</item>
+    <item>很小</item>
+    <item>小</item>
+    <item>中</item>
+    <item>大</item>
+    <item>很大</item>
+    <item>极大</item>
+  </string-array>
+
+  <string-array name="app_themes">
+    <item>浅色</item>
+    <item>深色</item>
+    <item>跟随系统</item>
+  </string-array>
+
+  <string-array name="layout_types">
+    <item>动画</item>
+    <item>标签</item>
+    <item>固定</item>
+    <item>我的持仓</item>
+  </string-array>
+
+  <string-array name="widget_width_types">
+    <item>自动</item>
+    <item>1</item>
+    <item>2</item>
+    <item>3</item>
+    <item>4</item>
+    <item>5</item>
+  </string-array>
+
+  <string-array name="backgrounds">
+    <item>跟随系统</item>
+    <item>透明</item>
+    <item>半透明</item>
+  </string-array>
+
+  <string-array name="text_colors">
+    <item>跟随系统</item>
+    <item>浅色</item>
+    <item>深色</item>
+  </string-array>
+
+  <string-array name="sync_periods">
+    <item>5 分钟</item>
+    <item>15 分钟</item>
+    <item>30 分钟</item>
+    <item>45 分钟</item>
+    <item>1 小时</item>
+  </string-array>
+
+  <string-array name="days">
+    <item>周一</item>
+    <item>周二</item>
+    <item>周三</item>
+    <item>周四</item>
+    <item>周五</item>
+    <item>周六</item>
+    <item>周日</item>
+  </string-array>
+
+  <string-array name="a_share_data_sources">
+    <item>腾讯财经</item>
+    <item>东方财富</item>
+  </string-array>
+</resources>

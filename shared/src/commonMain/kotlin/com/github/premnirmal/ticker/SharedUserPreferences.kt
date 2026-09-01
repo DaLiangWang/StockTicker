@@ -1,7 +1,6 @@
 package com.github.premnirmal.ticker
 
 import com.github.premnirmal.ticker.components.AppNumberFormat
-import com.github.premnirmal.ticker.network.CrumbStore
 import com.github.premnirmal.ticker.settings.PreferenceStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,14 +26,14 @@ import kotlin.random.Random
  */
 open class SharedUserPreferences(
     protected val store: PreferenceStore,
-) : UserPreferences, CrumbStore {
+) : UserPreferences {
 
     init {
         AppNumberFormat.roundToTwoDecimalPlaces = roundToTwoDecimalPlaces()
     }
 
     override val updateIntervalMs: Long
-        get() = when (store.getInt(UPDATE_INTERVAL, 1)) {
+        get() = when (store.getInt(UPDATE_INTERVAL, 0)) {
             0 -> 5 * 60 * 1000L
             1 -> 15 * 60 * 1000L
             2 -> 30 * 60 * 1000L
@@ -44,7 +43,7 @@ open class SharedUserPreferences(
         }
 
     override var updateIntervalPref: Int
-        get() = store.getInt(UPDATE_INTERVAL, 1).coerceIn(0, 4)
+        get() = store.getInt(UPDATE_INTERVAL, 0).coerceIn(0, 4)
         set(value) {
             store.setInt(UPDATE_INTERVAL, value)
         }
@@ -121,13 +120,21 @@ open class SharedUserPreferences(
         _showAddRemoveTooltip.value = count > TOOLTIP_THRESHOLD
     }
 
-    // --- CrumbStore ---
+    // --- A-share (mainland China) data source ---
 
-    override fun getCrumb(): String? = store.getString(CRUMB, null)
+    private val _aShareDataSource = MutableStateFlow(
+        store.getInt(A_SHARE_DATA_SOURCE, A_SHARE_SOURCE_TENCENT)
+    )
 
-    override fun setCrumb(crumb: String?) {
-        store.setString(CRUMB, crumb)
-    }
+    override val aShareDataSourceFlow: Flow<Int> = _aShareDataSource
+
+    override var aShareDataSourcePref: Int
+        get() = _aShareDataSource.value.coerceIn(A_SHARE_SOURCE_TENCENT, A_SHARE_SOURCE_EAST_MONEY)
+        set(value) {
+            val coerced = value.coerceIn(A_SHARE_SOURCE_TENCENT, A_SHARE_SOURCE_EAST_MONEY)
+            _aShareDataSource.value = coerced
+            store.setInt(A_SHARE_DATA_SOURCE, coerced)
+        }
 
     // --- Configured update window (platform-neutral) ---
 
@@ -138,8 +145,8 @@ open class SharedUserPreferences(
         store.setString(START_TIME, time)
     }
 
-    /** The configured end of the daily update window (default 16:00). */
-    override fun endTime(): Time = Time.parse(store.getString(END_TIME, "16:00") ?: "16:00")
+    /** The configured end of the daily update window (default 15:00). */
+    override fun endTime(): Time = Time.parse(store.getString(END_TIME, "15:00") ?: "15:00")
 
     override fun setEndTime(time: String) {
         store.setString(END_TIME, time)
@@ -177,8 +184,11 @@ open class SharedUserPreferences(
         const val START_TIME = "START_TIME"
         const val END_TIME = "END_TIME"
         const val UPDATE_DAYS = "UPDATE_DAYS"
+        const val A_SHARE_DATA_SOURCE = "A_SHARE_DATA_SOURCE"
 
         const val FOLLOW_SYSTEM_THEME = UserPreferences.FOLLOW_SYSTEM_THEME
+        const val A_SHARE_SOURCE_TENCENT = UserPreferences.A_SHARE_SOURCE_TENCENT
+        const val A_SHARE_SOURCE_EAST_MONEY = UserPreferences.A_SHARE_SOURCE_EAST_MONEY
         private const val TOOLTIP_THRESHOLD = 5
         private val DEFAULT_UPDATE_DAYS = setOf(1, 2, 3, 4, 5)
     }

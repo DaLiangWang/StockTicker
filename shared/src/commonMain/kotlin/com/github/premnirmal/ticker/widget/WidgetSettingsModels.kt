@@ -24,6 +24,15 @@ interface WidgetSettings {
     fun setHideHeader(value: Boolean)
     fun setCurrencyEnabled(value: Boolean)
     fun setShowRefreshButton(value: Boolean)
+
+    /** Shows/hides the portfolio's current market value (当前市值) in the widget summary row. */
+    fun setShowMarketValue(value: Boolean)
+
+    /** Shows/hides today's portfolio profit & loss (今日盈亏) in the widget summary row. */
+    fun setShowTodayGainLoss(value: Boolean)
+
+    /** Shows/hides the accumulated portfolio profit & loss (累计盈亏) in the widget summary row. */
+    fun setShowTotalGainLoss(value: Boolean)
 }
 
 /**
@@ -44,6 +53,9 @@ data class WidgetPrefs(
     val hideWidgetHeader: Boolean,
     val showCurrency: Boolean,
     val showRefreshButton: Boolean,
+    val showMarketValue: Boolean,
+    val showTodayGainLoss: Boolean,
+    val showTotalGainLoss: Boolean,
 )
 
 /**
@@ -59,8 +71,6 @@ class WidgetSettingsStrings(
     val autoSortDesc: String,
     val layoutType: String,
     val layoutTypes: Array<String>,
-    val chooseTextSize: String,
-    val fontSizes: Array<String>,
     val widgetWidth: String,
     val widgetWidthTypes: Array<String>,
     val background: String,
@@ -75,4 +85,10 @@ class WidgetSettingsStrings(
     val showCurrencyDesc: String,
     val showRefresh: String,
     val showRefreshDesc: String,
+    val showMarketValue: String,
+    val showMarketValueDesc: String,
+    val showTodayGainLoss: String,
+    val showTodayGainLossDesc: String,
+    val showTotalGainLoss: String,
+    val showTotalGainLossDesc: String,
 )

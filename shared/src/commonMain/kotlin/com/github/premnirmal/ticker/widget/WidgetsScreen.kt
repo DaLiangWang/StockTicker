@@ -211,16 +211,6 @@ private fun LazyListScope.widgetSettings(
         divider()
     }
     item {
-        @Suppress("DEPRECATION")
-        ListPreference(
-            title = strings.chooseTextSize,
-            items = strings.fontSizes,
-            selected = prefs.fontSizePref,
-            onSelected = settings::setFontSize
-        )
-        divider()
-    }
-    item {
         ListPreference(
             title = strings.widgetWidth,
             items = strings.widgetWidthTypes,
@@ -279,6 +269,34 @@ private fun LazyListScope.widgetSettings(
             subtitle = strings.showRefreshDesc,
             checked = prefs.showRefreshButton,
             onCheckChanged = settings::setShowRefreshButton
+        )
+        divider()
+    }
+    // Portfolio P&L monitor — the three headline numbers shown above the quotes grid.
+    item {
+        CheckboxPreference(
+            title = strings.showMarketValue,
+            subtitle = strings.showMarketValueDesc,
+            checked = prefs.showMarketValue,
+            onCheckChanged = settings::setShowMarketValue
+        )
+        divider()
+    }
+    item {
+        CheckboxPreference(
+            title = strings.showTodayGainLoss,
+            subtitle = strings.showTodayGainLossDesc,
+            checked = prefs.showTodayGainLoss,
+            onCheckChanged = settings::setShowTodayGainLoss
+        )
+        divider()
+    }
+    item {
+        CheckboxPreference(
+            title = strings.showTotalGainLoss,
+            subtitle = strings.showTotalGainLossDesc,
+            checked = prefs.showTotalGainLoss,
+            onCheckChanged = settings::setShowTotalGainLoss
         )
         divider()
     }

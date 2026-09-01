@@ -11,7 +11,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.ticker.AppPreferences
-import com.github.premnirmal.ticker.detail.QuoteCard
+import com.github.premnirmal.ticker.detail.QuoteTableRow
 import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.rememberScrollToTopAction
 import com.github.premnirmal.ticker.network.data.Quote
@@ -75,10 +75,9 @@ fun WatchlistContent(
         },
         onRefresh = viewModel::refresh,
         onQuoteClick = onQuoteClick,
-        quoteCard = { quote, cardModifier, interactionSource, onClick, onRemoveClick ->
-            QuoteCard(
+        quoteCard = { quote, cardModifier, onClick, onRemoveClick ->
+            QuoteTableRow(
                 modifier = cardModifier,
-                interactionSource = interactionSource,
                 quote = quote,
                 onClick = { onClick() },
                 showMore = true,

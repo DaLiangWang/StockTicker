@@ -1,6 +1,5 @@
 package com.github.premnirmal.ticker
 
-import com.github.premnirmal.ticker.network.CrumbStore
 import com.github.premnirmal.ticker.settings.PreferenceStore
 import com.github.premnirmal.tickerwidget.ui.theme.SelectedTheme
 import java.text.DecimalFormat
@@ -9,13 +8,12 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle.MEDIUM
 
 /**
- * Android entry point for the shared [UserPreferences] settings contract and [CrumbStore] crumb
- * persistence, backed by a [PreferenceStore].
+ * Android entry point for the shared [UserPreferences] settings contract, backed by a
+ * [PreferenceStore].
  *
  * The read/write logic itself is fully shared in [SharedUserPreferences]; this class only adds the
- * Android-only extras that depend on JVM types — the `java.text` decimal formatters
- * ([selectedDecimalFormat]) and the saved app-version bookkeeping — plus the legacy preference-key
- * and widget-related constants that the rest of the `:app` module still references.
+ * saved app-version bookkeeping plus the legacy preference-key, widget-related and `java.time`
+ * formatting constants that the rest of the `:app` module still references.
  *
  * Created by premnirmal on 2/26/16.
  */
@@ -26,13 +24,6 @@ class AppPreferences constructor(
     init {
         INSTANCE = this
     }
-
-    val selectedDecimalFormat: Format
-        get() = if (roundToTwoDecimalPlaces()) {
-            DECIMAL_FORMAT_2DP
-        } else {
-            DECIMAL_FORMAT
-        }
 
     companion object {
 
@@ -75,6 +66,9 @@ class AppPreferences constructor(
         const val BOLD_CHANGE = "BOLD_CHANGE"
         const val SHOW_CURRENCY = "SHOW_CURRENCY"
         const val SHOW_REFRESH = "SHOW_REFRESH"
+        const val SHOW_MARKET_VALUE = "SHOW_MARKET_VALUE"
+        const val SHOW_TODAY_GAIN_LOSS = "SHOW_TODAY_GAIN_LOSS"
+        const val SHOW_TOTAL_GAIN_LOSS = "SHOW_TOTAL_GAIN_LOSS"
         const val PERCENT = "PERCENT"
         const val CRUMB = "CRUMB"
         const val APP_VERSION_CODE = "APP_VERSION_CODE"
@@ -93,10 +87,6 @@ class AppPreferences constructor(
         val AXIS_DATE_FORMATTER: DateTimeFormatter = DateTimeFormatter.ofPattern("LLL dd-yyyy")
 
         val DECIMAL_FORMAT: Format = DecimalFormat("#,##0.00##")
-        val DECIMAL_FORMAT_2DP: Format = DecimalFormat("#,##0.00")
-
-        val SELECTED_DECIMAL_FORMAT: Format
-            get() = if (::INSTANCE.isInitialized) { INSTANCE.selectedDecimalFormat } else DECIMAL_FORMAT
 
         val SELECTED_THEME: SelectedTheme
             get() = if (::INSTANCE.isInitialized) { INSTANCE.selectedTheme } else SelectedTheme.SYSTEM

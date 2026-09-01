@@ -34,7 +34,8 @@ sealed class FetchState {
  * Formats a fetch timestamp ([epochMillis]) as a wall-clock string in the system time zone: `"HH:mm"`
  * when the timestamp is on the current day, otherwise `"HH:mm <ShortDay>"` (e.g. `"09:30 Mon"`).
  *
- * Backed by `java.time` on Android and `kotlinx-datetime` on iOS, mirroring the Android
- * `ZonedDateTime.createTimeString()` helper this replaced.
+ * Backed by `java.time` on Android and `kotlinx-datetime` on iOS. This is the single source of
+ * truth for fetch-time labels: the shared [FetchState] and the Android Glance widget's
+ * `SerializableFetchState` both format their timestamps through it.
  */
-internal expect fun formatFetchTime(epochMillis: Long): String
+expect fun formatFetchTime(epochMillis: Long): String

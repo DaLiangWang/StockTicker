@@ -33,6 +33,7 @@ import java.time.temporal.ChronoUnit
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MILLISECONDS
 import java.util.concurrent.TimeUnit.MINUTES
+import kotlin.math.max
 
 /**
  * Created by premnirmal on 2/28/16.
@@ -253,7 +254,10 @@ class AlarmScheduler constructor(
 
     override fun enqueuePeriodicRefresh() {
         with(workManager) {
-            val delayMs = appPreferences.updateIntervalMs
+            // WorkManager enforces a minimum periodic interval of 15 minutes; the precise (sub-15-min)
+            // cadence is driven by the AlarmManager exact-alarm chain in [scheduleUpdate], so clamp the
+            // periodic fallback to the platform minimum to avoid an IllegalArgumentException.
+            val delayMs = max(appPreferences.updateIntervalMs, MIN_PERIODIC_INTERVAL_MS)
             val constraints = Constraints.Builder()
                 .setRequiredNetworkType(NetworkType.CONNECTED)
                 .build()
@@ -309,6 +313,7 @@ class AlarmScheduler constructor(
 
     companion object {
         private const val REQUEST_CODE_SUMMARY_NOTIFICATION = 123
+        private const val MIN_PERIODIC_INTERVAL_MS = 15 * 60 * 1000L
         private const val CONSECUTIVE_NO_NETWORK_RETRIES = "CONSECUTIVE_NO_NETWORK_RETRIES"
         private const val NO_NETWORK_RETRY_BASE_MS = 30_000L
         private const val MAX_NO_NETWORK_RETRY_MS = 10 * 60 * 1000L

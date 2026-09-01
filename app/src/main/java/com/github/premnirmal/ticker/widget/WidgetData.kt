@@ -46,6 +46,9 @@ class WidgetData : IWidgetData, KoinComponent {
         private const val BOLD_CHANGE = AppPreferences.BOLD_CHANGE
         private const val SHOW_CURRENCY = AppPreferences.SHOW_CURRENCY
         private const val SHOW_REFRESH = AppPreferences.SHOW_REFRESH
+        private const val SHOW_MARKET_VALUE = AppPreferences.SHOW_MARKET_VALUE
+        private const val SHOW_TODAY_GAIN_LOSS = AppPreferences.SHOW_TODAY_GAIN_LOSS
+        private const val SHOW_TOTAL_GAIN_LOSS = AppPreferences.SHOW_TOTAL_GAIN_LOSS
         private const val PERCENT = AppPreferences.PERCENT
         private const val AUTOSORT = AppPreferences.SETTING_AUTOSORT
         private const val HIDE_HEADER = AppPreferences.SETTING_HIDE_HEADER
@@ -163,7 +166,7 @@ class WidgetData : IWidgetData, KoinComponent {
         get() {
             var name = preferences.getString(WIDGET_NAME, "")!!
             if (name.isEmpty()) {
-                name = "Widget #$position"
+                name = context.getString(R.string.widget_default_name, position)
                 setWidgetName(name)
             }
             return name
@@ -232,7 +235,7 @@ class WidgetData : IWidgetData, KoinComponent {
 
     @Deprecated("will be removed in future version")
     fun setFontSize(value: Int) {
-        appMessaging.sendSnackbar("Font size is a deprecated setting, FYI this will be removed in a future version!")
+        appMessaging.sendSnackbar(context.getString(R.string.font_size_deprecated_message))
         val validValue = value.coerceIn(0, 6)
         preferences.edit {
             putInt(FONT_SIZE, validValue)
@@ -457,6 +460,42 @@ class WidgetData : IWidgetData, KoinComponent {
         emitWidgetChanges()
     }
 
+    /** Whether the widget shows the portfolio's current market value (当前市值). */
+    fun readShowMarketValue(): Boolean = preferences.getBoolean(SHOW_MARKET_VALUE, true)
+
+    fun setShowMarketValue(value: Boolean) {
+        preferences.edit {
+            putBoolean(SHOW_MARKET_VALUE, value)
+        }
+        _prefsFlow.value = toPrefs()
+        _data.value = toState()
+        emitWidgetChanges()
+    }
+
+    /** Whether the widget shows today's portfolio profit & loss (今日盈亏). */
+    fun readShowTodayGainLoss(): Boolean = preferences.getBoolean(SHOW_TODAY_GAIN_LOSS, true)
+
+    fun setShowTodayGainLoss(value: Boolean) {
+        preferences.edit {
+            putBoolean(SHOW_TODAY_GAIN_LOSS, value)
+        }
+        _prefsFlow.value = toPrefs()
+        _data.value = toState()
+        emitWidgetChanges()
+    }
+
+    /** Whether the widget shows the accumulated portfolio profit & loss (累计盈亏). */
+    fun readShowTotalGainLoss(): Boolean = preferences.getBoolean(SHOW_TOTAL_GAIN_LOSS, true)
+
+    fun setShowTotalGainLoss(value: Boolean) {
+        preferences.edit {
+            putBoolean(SHOW_TOTAL_GAIN_LOSS, value)
+        }
+        _prefsFlow.value = toPrefs()
+        _data.value = toState()
+        emitWidgetChanges()
+    }
+
     fun toPrefs(): Prefs {
         return Prefs(
             id = widgetId,
@@ -479,6 +518,9 @@ class WidgetData : IWidgetData, KoinComponent {
             negativeTextColor = negativeTextColor,
             textColor = textColorRes(),
             showRefreshButton = showRefreshButton(),
+            showMarketValue = readShowMarketValue(),
+            showTodayGainLoss = readShowTodayGainLoss(),
+            showTotalGainLoss = readShowTotalGainLoss(),
         )
     }
 
@@ -502,6 +544,9 @@ class WidgetData : IWidgetData, KoinComponent {
             negativeTextColor = negativeTextColor,
             textColor = textColorRes(),
             showRefreshButton = showRefreshButton(),
+            showMarketValue = readShowMarketValue(),
+            showTodayGainLoss = readShowTodayGainLoss(),
+            showTotalGainLoss = readShowTotalGainLoss(),
         )
     }
 
@@ -614,6 +659,9 @@ class WidgetData : IWidgetData, KoinComponent {
         @get:ColorRes
         val textColor: Int,
         val showRefreshButton: Boolean,
+        val showMarketValue: Boolean = true,
+        val showTodayGainLoss: Boolean = true,
+        val showTotalGainLoss: Boolean = true,
     ) : Parcelable
 
     @Parcelize
@@ -648,5 +696,8 @@ class WidgetData : IWidgetData, KoinComponent {
         @get:ColorRes
         val textColor: Int,
         val showRefreshButton: Boolean,
+        val showMarketValue: Boolean = true,
+        val showTodayGainLoss: Boolean = true,
+        val showTotalGainLoss: Boolean = true,
     ) : Parcelable
 }

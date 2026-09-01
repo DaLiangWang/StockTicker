@@ -79,16 +79,6 @@ fun HomeListDetail(
                     label = stringResource(string.action_portfolio)
                 )
             )
-            if (widthSizeClass != WindowWidthSizeClass.Expanded) {
-                add(
-                    HomeBottomNavDestination(
-                        HomeRoute.Trending,
-                        selectedIcon = painterResource(id = drawable.ic_news),
-                        unselectedIcon = painterResource(id = drawable.ic_news),
-                        label = stringResource(string.action_feed)
-                    )
-                )
-            }
             add(
                 HomeBottomNavDestination(
                     HomeRoute.Search,

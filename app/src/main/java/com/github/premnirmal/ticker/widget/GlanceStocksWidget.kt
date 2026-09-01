@@ -1,11 +1,9 @@
 package com.github.premnirmal.ticker.widget
 
 import android.content.Context
-import android.widget.RemoteViews
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -17,21 +15,16 @@ import androidx.glance.GlanceTheme
 import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
-import androidx.glance.LocalSize
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.AndroidRemoteViews
 import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
 import androidx.glance.appwidget.action.ActionCallback
 import androidx.glance.appwidget.action.actionRunCallback
-import androidx.glance.appwidget.lazy.GridCells
-import androidx.glance.appwidget.lazy.LazyVerticalGrid
-import androidx.glance.appwidget.lazy.itemsIndexed
 import androidx.glance.appwidget.provideContent
 import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
@@ -39,7 +32,9 @@ import androidx.glance.currentState
 import androidx.glance.layout.Alignment
 import androidx.glance.layout.Box
 import androidx.glance.layout.Column
+import androidx.glance.layout.ColumnScope
 import androidx.glance.layout.Row
+import androidx.glance.layout.RowScope
 import androidx.glance.layout.fillMaxSize
 import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
@@ -57,6 +52,7 @@ import androidx.glance.text.TextStyle
 import androidx.glance.unit.ColorProvider
 import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.home.HomeActivity
+import com.github.premnirmal.ticker.model.PortfolioSummary
 import com.github.premnirmal.ticker.model.StocksProvider
 import com.github.premnirmal.ticker.network.data.Holding
 import com.github.premnirmal.ticker.network.data.Position
@@ -64,7 +60,18 @@ import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.tickerwidget.R
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import kotlin.random.Random
+
+private const val WIDGET_FONT_SIZE = 13f
+
+/** Enlarged size for the three stacked portfolio values (今日盈亏 / 累计盈亏 / 当前市值). */
+private const val SUMMARY_VALUE_FONT_SIZE = 20f
+
+/** Smaller size for the header clock, which only shows `HH:mm:ss`. */
+private const val HEADER_TIME_FONT_SIZE = 10f
 
 class GlanceStocksWidget : GlanceAppWidget(), KoinComponent {
 
@@ -128,218 +135,156 @@ fun GlanceWidget(
     widgetData: SerializableWidgetState,
     quotes: List<Quote>,
 ) {
-    val context = LocalContext.current
-    val size = LocalSize.current
-    val width = size.width.value.toInt()
-    val columns = when {
-        widgetData.sizePref > 0 -> widgetData.sizePref
-        // 0 means auto, where we calculate column count based on the width below
-        width > 850 -> 4
-        width > 750 -> 3
-        width > 250 -> 2
-        else -> 1
-    }
-
     Box(
         modifier = GlanceModifier.fillMaxSize()
-            .background(ImageProvider(widgetData.backgroundResource))
+            // Transparent so the launcher wallpaper shows through — the widget no longer paints its
+            // own card background.
+            .background(ColorProvider(R.color.widget_bg_transparent))
+            // Tapping anywhere on the widget opens the watchlist.
+            .clickable(actionStartActivity<HomeActivity>())
             .padding(6.dp)
     ) {
         Column(
             modifier = GlanceModifier.fillMaxSize()
         ) {
-            if (quotes.isEmpty()) {
-                Box(
-                    modifier = GlanceModifier.fillMaxSize().clickable(actionStartActivity<HomeActivity>()),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = context.getString(R.string.no_symbols),
-                        style = TextStyle(
-                            color = ColorProvider(R.color.text_widget_negative),
-                            fontSize = TextUnit(16f, TextUnitType.Sp),
-                            textAlign = TextAlign.Center,
-                            fontWeight = FontWeight.Bold,
-                        ),
-                    )
-                }
-            } else {
-                if (!widgetData.hideWidgetHeader) {
-                    Header(widgetData)
-                }
-                QuotesGrid(columns, widgetData, quotes)
+            if (!widgetData.hideWidgetHeader) {
+                Header(widgetData)
             }
+            PortfolioSummaryRow(widgetData, quotes)
         }
     }
 }
 
+/**
+ * The portfolio P&L strip rendered between the widget header and the quotes grid.
+ *
+ * It surfaces the three numbers the user opted into (当前市值 / 今日盈亏 / 累计盈亏) for the symbols in
+ * *this* widget, aggregated with the shared [PortfolioSummary] so the widget and the in-app screen
+ * can never disagree. Nothing is rendered when every toggle is off or when no symbol in the widget
+ * has a position, so a watchlist-only widget keeps its old layout.
+ */
 @Composable
-private fun QuotesGrid(
-    columns: Int,
+private fun ColumnScope.PortfolioSummaryRow(
     widgetData: SerializableWidgetState,
     quotes: List<Quote>,
 ) {
+    val summary = remember(quotes) { PortfolioSummary.from(quotes) }
     val context = LocalContext.current
-    val changeType by remember(widgetData) { mutableStateOf(widgetData.changeType) }
     val textColor = ColorProvider(widgetData.textColor)
-    val fontSize = widgetData.fontSize
-    val layoutType = remember(widgetData) { widgetData.layoutType }
     val isBold = widgetData.boldText
-    LazyVerticalGrid(
-        modifier = GlanceModifier,
-        gridCells = GridCells.Fixed(columns),
+
+    if (summary.isEmpty) {
+        Text(
+            text = context.getString(R.string.no_symbols),
+            style = TextStyle(
+                color = textColor,
+                fontSize = TextUnit(WIDGET_FONT_SIZE, TextUnitType.Sp),
+                textAlign = TextAlign.Start,
+            ),
+            maxLines = 1,
+        )
+        return
+    }
+
+    // Three columns — 今日 (left) / 累计 (centre) / 总资产 (right). They share one horizontal
+    // row so each column's three lines stay glued together.
+    Row(
+        modifier = GlanceModifier.defaultWeight().fillMaxWidth().padding(bottom = 2.dp),
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        itemsIndexed(items = quotes, itemId = { index, _ -> index.toLong() }) { _, stock ->
-            val changeValueFormatted = stock.changeString()
-            val changePercentFormatted = stock.changePercentString()
-            val priceFormatted = remember(widgetData.showCurrency, stock.lastTradePrice) {
-                if (widgetData.showCurrency) {
-                    stock.priceFormat.format(stock.lastTradePrice)
-                } else {
-                    stock.priceString()
-                }
-            }
-            val displayName = stock.properties?.displayname.takeUnless { it.isNullOrBlank() } ?: stock.symbol
-            val change = stock.change
-            val changeInPercent = stock.changeInPercent
-            val widgetChangeColor = remember(change, changeInPercent) {
-                widgetData.getChangeColor(change, changeInPercent)
-            }
-            val changeColor = ColorProvider(widgetChangeColor)
-            val changeFormatted = remember(changeType, layoutType) {
-                if (layoutType == SerializableLayoutType.Tabs) {
-                    changeValueFormatted
-                } else {
-                    when (changeType) {
-                        SerializableChangeType.Value -> changeValueFormatted
-                        SerializableChangeType.Percent -> changePercentFormatted
-                    }
-                }
-            }
+        SummaryItem(
+            label = context.getString(R.string.widget_title_today),
+            value = summary.todayGainLossString(),
+            valueColor = ColorProvider(
+                widgetData.getChangeColor(summary.todayGainLoss, summary.todayGainLossPercent)
+            ),
+            subtitle = summary.todayGainLossPercentString(),
+            subtitleColor = ColorProvider(
+                widgetData.getChangeColor(summary.todayGainLoss, summary.todayGainLossPercent)
+            ),
+            fontSize = SUMMARY_VALUE_FONT_SIZE,
+            isBold = isBold,
+            textAlign = TextAlign.Start,
+        )
+        SummaryItem(
+            label = context.getString(R.string.widget_title_total),
+            value = summary.totalGainLossString(),
+            valueColor = ColorProvider(
+                widgetData.getChangeColor(summary.totalGainLoss, summary.totalGainLossPercent)
+            ),
+            subtitle = summary.totalGainLossPercentString(),
+            subtitleColor = ColorProvider(
+                widgetData.getChangeColor(summary.totalGainLoss, summary.totalGainLossPercent)
+            ),
+            fontSize = SUMMARY_VALUE_FONT_SIZE,
+            isBold = isBold,
+            textAlign = TextAlign.Center,
+        )
+        SummaryItem(
+            label = context.getString(R.string.widget_title_market_value),
+            value = summary.marketValueString(),
+            valueColor = textColor,
+            subtitle = context.getString(R.string.widget_currency_holdings, summary.positionCount),
+            subtitleColor = ColorProvider(R.color.text_widget_header),
+            fontSize = SUMMARY_VALUE_FONT_SIZE,
+            isBold = isBold,
+            textAlign = TextAlign.End,
+        )
+    }
+}
 
-            if (layoutType == SerializableLayoutType.MyPortfolio) {
-                MyPortfolio(
-                    stock = stock,
-                    widgetData = widgetData,
-                )
-            } else {
-                Row(
-                    modifier = GlanceModifier.fillMaxSize(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        modifier = GlanceModifier.defaultWeight().padding(horizontal = 2.dp).clickable(
-                            actionStartActivity<HomeActivity>(
-                                // actionParametersOf(
-                                //     ActionParameters.Key<String>(HomeActivity.EXTRA_SYMBOL) to stock.symbol
-                                // )
-                            )
-                        ),
-                        text = displayName,
-                        style = TextStyle(
-                            color = textColor,
-                            fontSize = TextUnit(fontSize, TextUnitType.Sp),
-                            textAlign = TextAlign.Start,
-                            fontWeight = FontWeight.Medium,
-                        ),
-                        maxLines = 1,
-                    )
-                    Text(
-                        modifier = GlanceModifier.padding(horizontal = 2.dp).clickable(
-                            actionStartActivity<HomeActivity>(
-                                // actionParametersOf(
-                                //     ActionParameters.Key<String>(HomeActivity.EXTRA_SYMBOL) to stock.symbol
-                                // )
-                            )
-                        ),
-                        text = priceFormatted,
-                        style = TextStyle(
-                            color = textColor,
-                            fontSize = TextUnit(fontSize, TextUnitType.Sp),
-                            fontWeight = FontWeight.Normal,
-                            textAlign = TextAlign.End,
-                        ),
-                        maxLines = 1,
-                    )
-
-                    if (layoutType == SerializableLayoutType.Animated) {
-                        val flipper = RemoteViews(context.packageName, R.layout.stockview_flipper)
-                        Box(
-                            modifier = GlanceModifier.defaultWeight().padding(end = 2.dp).clickable(
-                                actionStartActivity<HomeActivity>(
-                                    // actionParametersOf(
-                                    //     ActionParameters.Key<String>(HomeActivity.EXTRA_SYMBOL) to stock.symbol
-                                    // )
-                                )
-                            ),
-                            contentAlignment = Alignment.CenterEnd,
-                        ) {
-                            AndroidRemoteViews(
-                                remoteViews = flipper,
-                                containerViewId = R.id.view_flipper,
-                                modifier = GlanceModifier.fillMaxWidth()
-                            ) {
-                                Text(
-                                    modifier = GlanceModifier.fillMaxWidth(),
-                                    text = changeValueFormatted,
-                                    style = TextStyle(
-                                        color = changeColor,
-                                        fontSize = TextUnit(fontSize, TextUnitType.Sp),
-                                        fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
-                                        textAlign = TextAlign.End,
-                                    ),
-                                    maxLines = 1,
-                                )
-                                Text(
-                                    modifier = GlanceModifier.fillMaxWidth(),
-                                    text = changePercentFormatted,
-                                    style = TextStyle(
-                                        color = changeColor,
-                                        fontSize = TextUnit(fontSize, TextUnitType.Sp),
-                                        fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
-                                        textAlign = TextAlign.End,
-                                    ),
-                                    maxLines = 1,
-                                )
-                            }
-                        }
-                    } else {
-                        Text(
-                            modifier = GlanceModifier.defaultWeight().padding(end = 2.dp)
-                                .then(
-                                    if (layoutType == SerializableLayoutType.Fixed) {
-                                        GlanceModifier.clickable(actionRunCallback<FlipTextCallback>())
-                                    } else {
-                                        GlanceModifier
-                                    }
-                                ),
-                            text = changeFormatted,
-                            style = TextStyle(
-                                color = changeColor,
-                                fontSize = TextUnit(fontSize, TextUnitType.Sp),
-                                fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
-                                textAlign = TextAlign.End,
-                            ),
-                            maxLines = 1,
-                        )
-
-                        if (layoutType == SerializableLayoutType.Tabs) {
-                            Text(
-                                modifier = GlanceModifier.defaultWeight().padding(end = 2.dp),
-                                text = changePercentFormatted,
-                                style = TextStyle(
-                                    color = changeColor,
-                                    fontSize = TextUnit(fontSize, TextUnitType.Sp),
-                                    fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
-                                    textAlign = TextAlign.End,
-                                ),
-                                maxLines = 1,
-                            )
-                        }
-                    }
-                }
-            }
-        }
+/**
+ * One label/value/subtitle column inside [PortfolioSummaryRow]. It claims an equal share of the row's
+ * width via [GlanceModifier.defaultWeight] and aligns all three lines to [textAlign] (left / centre /
+ * right). The title is always white, the value takes its colour from the caller, and the subtitle
+ * is independently coloured so gains/losses can echo the value colour while the market-value column
+ * shows a neutral subtitle.
+ */
+@Composable
+private fun RowScope.SummaryItem(
+    label: String,
+    value: String,
+    valueColor: ColorProvider,
+    subtitle: String,
+    subtitleColor: ColorProvider,
+    fontSize: Float,
+    isBold: Boolean,
+    textAlign: TextAlign,
+) {
+    Column(modifier = GlanceModifier.defaultWeight()) {
+        Text(
+            modifier = GlanceModifier.fillMaxWidth(),
+            text = label,
+            style = TextStyle(
+                color = ColorProvider(R.color.widget_title_white),
+                fontSize = TextUnit((fontSize - 9f).coerceAtLeast(7f), TextUnitType.Sp),
+                textAlign = textAlign,
+                fontWeight = FontWeight.Normal,
+            ),
+            maxLines = 1,
+        )
+        Text(
+            modifier = GlanceModifier.fillMaxWidth(),
+            text = value,
+            style = TextStyle(
+                color = valueColor,
+                fontSize = TextUnit(fontSize, TextUnitType.Sp),
+                textAlign = textAlign,
+                fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+            ),
+            maxLines = 1,
+        )
+        Text(
+            modifier = GlanceModifier.fillMaxWidth(),
+            text = subtitle,
+            style = TextStyle(
+                color = subtitleColor,
+                fontSize = TextUnit((fontSize - 9f).coerceAtLeast(7f), TextUnitType.Sp),
+                textAlign = textAlign,
+                fontWeight = FontWeight.Normal,
+            ),
+            maxLines = 1,
+        )
     }
 }
 
@@ -348,8 +293,8 @@ private fun Header(
     widgetData: SerializableWidgetState,
 ) {
     val context = LocalContext.current
-    val lastUpdatedText = when (widgetData.fetchState) {
-        is SerializableFetchState.Success -> context.getString(R.string.last_fetch, widgetData.fetchState.displayString)
+    val lastUpdatedText = when (val fetchState = widgetData.fetchState) {
+        is SerializableFetchState.Success -> formatClock(fetchState.fetchTime)
         is SerializableFetchState.Failure -> context.getString(R.string.refresh_failed)
         else -> SerializableFetchState.NotFetched.displayString
     }
@@ -357,18 +302,7 @@ private fun Header(
         modifier = GlanceModifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        val fontSize = widgetData.fontSize
-        Text(
-            modifier = GlanceModifier.defaultWeight().padding(horizontal = 2.dp),
-            text = lastUpdatedText,
-            style = TextStyle(
-                color = ColorProvider(R.color.text_widget_header),
-                fontSize = TextUnit(fontSize, TextUnitType.Sp),
-                textAlign = TextAlign.Start,
-                fontWeight = FontWeight.Normal,
-            ),
-        )
-
+        // Refresh button on the left, clock on the right.
         if (widgetData.showRefreshButton) {
             Box(
                 modifier = GlanceModifier.wrapContentSize().clickable(
@@ -391,8 +325,23 @@ private fun Header(
                 }
             }
         }
+
+        Text(
+            modifier = GlanceModifier.defaultWeight().padding(horizontal = 2.dp),
+            text = lastUpdatedText,
+            style = TextStyle(
+                color = ColorProvider(R.color.text_widget_header),
+                fontSize = TextUnit(HEADER_TIME_FONT_SIZE, TextUnitType.Sp),
+                textAlign = TextAlign.End,
+                fontWeight = FontWeight.Normal,
+            ),
+        )
     }
 }
+
+/** The refresh time as `HH:mm:ss` — the widget header has no room for a date or a weekday. */
+private fun formatClock(epochMillis: Long): String =
+    SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date(epochMillis))
 
 @Composable
 private fun MyPortfolio(
@@ -400,7 +349,7 @@ private fun MyPortfolio(
     widgetData: SerializableWidgetState,
 ) {
     val textColor = ColorProvider(widgetData.textColor)
-    val fontSize = widgetData.fontSize
+    val fontSize = WIDGET_FONT_SIZE
     val gainLossFormatted = stock.gainLossString()
     val gainLossPercentFormatted = stock.gainLossPercentString()
     val priceFormatted = if (widgetData.showCurrency) {

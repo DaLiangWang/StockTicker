@@ -29,11 +29,9 @@ class QuoteDetailViewModelTest {
     private fun viewModel(
         provider: FakeStocksProvider,
         prefs: FakeUserPreferences = FakeUserPreferences(),
-        newsEngine: MockEngine = TestProviders.unusedEngine(),
         chartEngine: MockEngine = TestProviders.unusedEngine()
     ) = QuoteDetailViewModel(
         stocksProvider = provider,
-        newsProvider = TestProviders.newsProvider(googleEngine = newsEngine),
         historyProvider = TestProviders.historyProvider(chartEngine),
         userPreferences = prefs
     )
@@ -112,19 +110,6 @@ class QuoteDetailViewModelTest {
     }
 
     @Test
-    fun fetchNews_populatesNewsDataFlow() = runTest {
-        val quote = Quote(symbol = "AAPL", name = "Apple Inc")
-        val provider = FakeStocksProvider(listOf(quote))
-        val newsEngine = MockEngine { respond(TestProviders.rssFeed("Apple soars"), HttpStatusCode.OK) }
-        val viewModel = viewModel(provider, newsEngine = newsEngine)
-
-        viewModel.fetchNews(quote)
-
-        val news = viewModel.newsData.first { it.isNotEmpty() }
-        assertTrue(news.any { it.article.title == "Apple soars" })
-    }
-
-    @Test
     fun addRemoveTooltipShown_delegatesToPreferences() = runTest {
         val prefs = FakeUserPreferences()
         val viewModel = viewModel(FakeStocksProvider(), prefs = prefs)
@@ -145,6 +130,5 @@ class QuoteDetailViewModelTest {
         viewModel.reset()
 
         assertEquals(null, viewModel.data.value)
-        assertTrue(viewModel.newsData.value.isEmpty())
     }
 }

@@ -4,19 +4,16 @@ import android.app.Application
 import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.premnirmal.ticker.AppPreferences
-import com.github.premnirmal.ticker.createTimeString
+import com.github.premnirmal.ticker.components.AppNumberFormat
+import com.github.premnirmal.ticker.components.DecimalFormatter
 import com.github.premnirmal.ticker.model.AlarmScheduler
 import com.github.premnirmal.ticker.model.FetchState
+import com.github.premnirmal.ticker.model.PortfolioSummary
 import com.github.premnirmal.ticker.model.StocksProvider
-import com.github.premnirmal.ticker.network.CommitsProvider
-import com.github.premnirmal.ticker.network.NewsProvider
-import com.github.premnirmal.ticker.notifications.NotificationsHandler
-import com.github.premnirmal.ticker.ui.AppMessaging
+import com.github.premnirmal.ticker.model.formatFetchTime
+import com.github.premnirmal.ticker.network.TrendingProvider
 import com.github.premnirmal.ticker.widget.WidgetData
 import com.github.premnirmal.ticker.widget.WidgetDataProvider
-import com.github.premnirmal.tickerwidget.BuildConfig
-import com.github.premnirmal.tickerwidget.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -26,30 +23,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import java.time.Instant
-import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.util.Locale
 
 class HomeViewModel constructor(
     application: Application,
     private val stocksProvider: StocksProvider,
-    private val appPreferences: AppPreferences,
-    private val newsProvider: NewsProvider,
+    private val trendingProvider: TrendingProvider,
     private val widgetDataProvider: WidgetDataProvider,
-    private val notificationsHandler: NotificationsHandler,
-    private val appMessaging: AppMessaging,
     private val alarmScheduler: AlarmScheduler,
-    private val commitsProvider: CommitsProvider,
 ) : AndroidViewModel(application) {
 
     val fetchState: StateFlow<FetchState>
         get() = stocksProvider.fetchState
     val nextFetch: Flow<String>
-        get() = stocksProvider.nextFetchMs.map {
-            val instant = Instant.ofEpochMilli(it)
-            val time = ZonedDateTime.ofInstant(instant, ZoneId.systemDefault())
-            time.createTimeString()
-        }
+        get() = stocksProvider.nextFetchMs.map { formatFetchTime(it) }
 
     val isRefreshing: StateFlow<Boolean>
         get() = _isRefreshing
@@ -78,11 +65,7 @@ class HomeViewModel constructor(
     }
 
     private fun initCaches() {
-        newsProvider.initCache()
-    }
-
-    fun initNotifications() {
-        notificationsHandler.initialize()
+        trendingProvider.initCache()
     }
 
     fun sendHomeEvent(event: HomeEvent) {
@@ -91,71 +74,42 @@ class HomeViewModel constructor(
         }
     }
 
+    /**
+     * The portfolio's headline P&L numbers — current market value (当前市值), today's P&L (今日盈亏) and
+     * the accumulated P&L (累计盈亏) — aggregated with the shared [PortfolioSummary] from the imported
+     * positions and formatted with the platform `NumberFormat` so the values stay locale-aware.
+     */
     val totalGainLoss: Flow<TotalGainLoss>
         get() = stocksProvider.portfolio.map { portfolio ->
-            val totalHoldings = portfolio.filter { it.hasPositions() }.sumOf { quote ->
-                quote.holdings().toDouble()
-            }
-            val totalHoldingsStr = appPreferences.selectedDecimalFormat.format(totalHoldings)
-            var totalGain = 0.0f
-            var totalLoss = 0.0f
-            val quotesWithPositions = portfolio.filter { it.hasPositions() }
-            for (quote in quotesWithPositions) {
-                val gainLoss = quote.gainLoss()
-                if (gainLoss > 0.0f) {
+            val summary = PortfolioSummary.from(portfolio)
+            val format = AppNumberFormat.selected
+            var totalGain = 0.0
+            var totalLoss = 0.0
+            for (quote in portfolio.filter { it.hasPositions() }) {
+                val gainLoss = quote.gainLoss().toDouble()
+                if (gainLoss > 0.0) {
                     totalGain += gainLoss
                 } else {
                     totalLoss += gainLoss
                 }
             }
-            val totalGainStr = "+" + appPreferences.selectedDecimalFormat.format(totalGain)
-            val totalLossStr = if (totalLoss != 0.0f) {
-                appPreferences.selectedDecimalFormat.format(totalLoss)
-            } else {
-                ""
-            }
-            TotalGainLoss(totalHoldingsStr, totalGainStr, totalLossStr)
+            TotalGainLoss(
+                holdings = format.format(summary.marketValue),
+                gain = "+" + format.format(totalGain.toFloat()),
+                loss = if (totalLoss != 0.0) format.format(totalLoss.toFloat()) else "",
+                todayGainLoss = formatSigned(format, summary.todayGainLoss),
+                todayGainLossPercent = formatSignedPercent(summary.todayGainLossPercent),
+                totalGainLossPercent = formatSignedPercent(summary.totalGainLossPercent),
+            )
         }
 
-    fun checkShowTutorial() {
-        val tutorialShown = appPreferences.tutorialShown()
-        if (!tutorialShown) {
-            showTutorial()
-        }
+    private fun formatSigned(format: DecimalFormatter, value: Float): String {
+        val formatted = format.format(value)
+        return if (value >= 0f) "+$formatted" else formatted
     }
 
-    fun showTutorial() {
-        viewModelScope.launch {
-            val title = getApplication<Application>().getString(R.string.how_to_title)
-            val message = getApplication<Application>().getString(R.string.how_to)
-            appMessaging.sendBottomSheet(title = title, message = message)
-            appPreferences.setTutorialShown(true)
-        }
-    }
-
-    fun checkShowWhatsNew() {
-        if (appPreferences.getLastSavedVersionCode() < BuildConfig.VERSION_CODE) {
-            showWhatsNew()
-        }
-    }
-
-    fun showWhatsNew() {
-        viewModelScope.launch {
-            val whatsNewResult = commitsProvider.loadWhatsNew()
-            val title = getApplication<Application>().getString(R.string.whats_new_in, BuildConfig.VERSION_NAME)
-            val message = with(whatsNewResult) {
-                if (wasSuccessful) {
-                    appPreferences.saveVersionCode(BuildConfig.VERSION_CODE)
-                    data.joinToString("\n\u25CF ", "\u25CF ")
-                } else {
-                    "${getApplication<Application>().getString(
-                        R.string.error_fetching_whats_new
-                    )}\n\n :( ${error.message.orEmpty()}"
-                }
-            }
-            appMessaging.sendBottomSheet(title = title, message = message)
-        }
-    }
+    private fun formatSignedPercent(value: Float): String =
+        "${if (value >= 0f) "+" else ""}${String.format(Locale.getDefault(), "%.2f", value)}%"
 
     fun refresh() {
         viewModelScope.launch {

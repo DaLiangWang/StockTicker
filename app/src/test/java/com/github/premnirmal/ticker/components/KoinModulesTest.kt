@@ -9,8 +9,6 @@ import com.github.premnirmal.ticker.di.sharedModule
 import com.github.premnirmal.ticker.model.AlarmScheduler
 import com.github.premnirmal.ticker.model.FetchEventLogger
 import com.github.premnirmal.ticker.model.HistoryProvider
-import com.github.premnirmal.ticker.network.CommitsProvider
-import com.github.premnirmal.ticker.network.NewsProvider
 import com.github.premnirmal.ticker.network.StocksApi
 import com.github.premnirmal.ticker.network.SuggestionsProvider
 import com.github.premnirmal.ticker.network.networkModule
@@ -53,9 +51,7 @@ class KoinModulesTest {
 
         // Shared orchestrators (built from the shared module + Android leaf clients).
         koin.get<StocksApi>()
-        koin.get<NewsProvider>()
         koin.get<HistoryProvider>()
-        koin.get<CommitsProvider>()
         koin.get<SuggestionsProvider>()
 
         // Android singletons.

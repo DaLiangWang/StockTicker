@@ -22,6 +22,7 @@ plugins {
 detekt {
   toolVersion = libs.versions.detekt.get()
   config.setFrom(files("../config/detekt/detekt.yml", "../config/detekt/detekt-formatting.yml"))
+  baseline = file("../config/detekt/baseline-app.xml")
   buildUponDefaultConfig = true
   autoCorrect = true
 }

@@ -55,6 +55,48 @@ internal open class TickersImportTask(private val widgetDataProvider: WidgetData
     }
 }
 
+/**
+ * Imports positions (symbol, shares, cost price) from a text file.
+ *
+ * Unlike [TickersImportTask] (a plain symbol list) and [PortfolioImportTask] (a full portfolio JSON
+ * snapshot), this reads the `symbol,shares,cost` rows a broker or spreadsheet exports and turns them
+ * into real holdings, which is what drives the 今日盈亏 / 累计盈亏 / 当前市值 figures. Symbols whose
+ * share/price columns are missing are still added to the watchlist, so a mixed file works.
+ *
+ * Parsing itself is platform-agnostic ([PositionImportParser]); this task only owns the Android IO.
+ *
+ * @return the number of positions imported, `0` when the file held no usable rows, or `null` on a
+ * read failure.
+ */
+internal class PositionsImportTask(private val stocksProvider: StocksProvider) : KoinComponent {
+
+    suspend fun import(context: Context, fileUri: Uri): Int? {
+        return try {
+            context.applicationContext.contentResolver.openInputStream(fileUri)?.use { inputStream ->
+                val text = BufferedReader(InputStreamReader(inputStream)).use { it.readText() }
+                val entries = PositionImportParser.parse(text)
+                if (entries.isEmpty()) return null
+                // Add every symbol in one batch so the watchlist triggers a single fetch rather than
+                // one network round-trip per row.
+                stocksProvider.addStocks(entries.map { it.symbol })
+                var imported = 0
+                for (entry in entries) {
+                    val shares = entry.shares
+                    val price = entry.price
+                    if (entry.hasPosition && shares != null && price != null) {
+                        stocksProvider.addHolding(entry.symbol, shares, price)
+                        imported++
+                    }
+                }
+                imported
+            }
+        } catch (e: Exception) {
+            Timber.w(e)
+            null
+        }
+    }
+}
+
 internal open class PortfolioImportTask(private val stocksProvider: StocksProvider) :
     ImportTask, KoinComponent {
 

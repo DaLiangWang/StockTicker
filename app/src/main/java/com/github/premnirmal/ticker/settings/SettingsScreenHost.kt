@@ -1,14 +1,11 @@
 package com.github.premnirmal.ticker.settings
 
-import android.Manifest
+import android.content.ClipData
+import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Build.VERSION
 import android.provider.Settings
-import android.view.Gravity
-import android.view.ViewConfiguration
-import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -16,52 +13,48 @@ import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.ticker.CustomTabs
-import com.github.premnirmal.ticker.debug.DbViewerActivity
 import com.github.premnirmal.ticker.home.HomeViewModel
 import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.rememberScrollToTopAction
 import com.github.premnirmal.ticker.showDialog
 import com.github.premnirmal.ticker.ui.fadingEdges
-import com.github.premnirmal.tickerwidget.BuildConfig
 import com.github.premnirmal.tickerwidget.R
 import com.github.premnirmal.tickerwidget.ui.Divider
 import com.github.premnirmal.tickerwidget.ui.theme.alegreyaFontFamily
 import com.github.premnirmal.tickerwidget.ui.theme.boldFontFamily
-import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.isGranted
-import com.google.accompanist.permissions.rememberPermissionState
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 /**
  * Android host for the shared [SettingsScreen]. Resolves the Koin [SettingsViewModel], the localised
- * labels/string-arrays, the file-picker launchers, the notification/alarm-permission flows, the
- * [CustomTabs] link openers, the version-tap easter egg, the [Divider] slot, the
- * [alegreyaFontFamily]/[boldFontFamily]
- * fonts, the [fadingEdges] and the navigation [rememberScrollToTopAction] registration, then
- * delegates to the shared screen.
+ * labels/string-arrays, the file-picker launchers for share/export, the CSV-text import dialog, the
+ * "copy CSV template" clipboard action, the [CustomTabs] open-source link, the alarm-permission
+ * banner, the [Divider] slot, the fonts, the [fadingEdges] and the navigation
+ * [rememberScrollToTopAction] registration, then delegates to the shared screen.
  */
-@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
@@ -69,14 +62,11 @@ fun SettingsScreen(
 ) {
     val viewModel = koinViewModel<SettingsViewModel>()
     val settingsData by viewModel.settings.collectAsStateWithLifecycle()
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsState()
-    val showAlarmPermissionRequest = remember(lifecycleState) {
-        homeViewModel.showAlarmPermissionRequest
-    }
+    val showAlarmPermissionRequest = remember { homeViewModel.showAlarmPermissionRequest }
     val context = LocalContext.current
 
-    // File-picker launchers
+    // File-picker launchers for share / export only. Position imports are now entered as CSV text in
+    // a dialog (see [showImportDialog] below), so there is no document picker for them.
     val shareLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("text/plain")
     ) {
@@ -84,15 +74,6 @@ fun SettingsScreen(
             viewModel.sharePortfolio(context, it)
         } else {
             context.showDialog(R.string.error_sharing)
-        }
-    }
-    val importLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.OpenDocument()
-    ) {
-        if (it != null) {
-            viewModel.importPortfolio(context, it)
-        } else {
-            context.showDialog(R.string.error_exporting)
         }
     }
     val exportLauncher = rememberLauncherForActivityResult(
@@ -105,27 +86,16 @@ fun SettingsScreen(
         }
     }
 
-    // Notification permission
-    val notificationPermissionState = rememberPermissionState(Manifest.permission.POST_NOTIFICATIONS) { granted ->
-        if (!granted) {
-            context.showDialog(R.string.notification_alerts_required_message)
-        } else {
-            viewModel.setReceiveNotificationAlerts(receive = true, initializeHandler = true)
-        }
-    }
-
-    // Version tap handler
-    val onVersionTap = remember { OnVersionTap(context) }
-
     val primaryColor = MaterialTheme.colorScheme.primary
+
+    var showImportDialog by remember { mutableStateOf(false) }
+    var csvText by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
     SettingsScreen(
         settingsData = settingsData,
         settingsTitle = stringResource(id = R.string.app_settings),
-        whatsNewTitle = stringResource(id = R.string.whats_new),
-        whatsNewSubtitle = stringResource(id = R.string.whats_new_in, BuildConfig.VERSION_NAME),
-        tutorialTitle = stringResource(id = R.string.tutorial),
-        tutorialSubtitle = stringResource(id = R.string.how_to_title),
         appThemeTitle = stringResource(id = R.string.app_theme),
         updateIntervalTitle = stringResource(id = R.string.update_interval),
         startTimeTitle = stringResource(id = R.string.start_time),
@@ -135,27 +105,15 @@ fun SettingsScreen(
         autoSortSubtitle = stringResource(id = R.string.auto_sort_desc),
         roundTwoDpTitle = stringResource(id = R.string.round_two_dp),
         roundTwoDpSubtitle = stringResource(id = R.string.round_two_dp_desc),
-        notificationAlertsTitle = stringResource(id = R.string.notification_alerts),
-        notificationAlertsSubtitle = stringResource(id = R.string.notification_alerts_desc),
         shareTitle = stringResource(id = R.string.action_share),
-        importTitle = stringResource(id = R.string.action_import),
-        importSubtitle = stringResource(id = R.string.action_import),
         exportTitle = stringResource(id = R.string.action_export),
         exportSubtitle = stringResource(id = R.string.export_desc),
-        reportBugTitle = stringResource(id = R.string.report_bug),
-        reportBugSubtitle = stringResource(id = R.string.report_bug_desc),
-        featureRequestTitle = stringResource(id = R.string.feature_request),
-        featureRequestSubtitle = stringResource(id = R.string.feature_request_desc),
-        privacyPolicyTitle = stringResource(id = R.string.privacy_policy),
-        openSourceText = stringResource(id = R.string.checkout_open_source),
-        versionName = BuildConfig.VERSION_NAME,
+        openSourceText = GITHUB_URL,
         confirmLabel = stringResource(id = R.string.ok),
         dismissLabel = stringResource(id = R.string.cancel),
         themes = stringArrayResource(id = R.array.app_themes),
         syncPeriods = stringArrayResource(id = R.array.sync_periods),
         days = stringArrayResource(id = R.array.days),
-        onWhatsNew = { homeViewModel.showWhatsNew() },
-        onTutorial = { homeViewModel.showTutorial() },
         onThemeSelected = { viewModel.setThemePref(it) },
         onUpdateIntervalSelected = { viewModel.setUpdateIntervalPref(it) },
         onStartTimeSet = { time, hour, minute -> viewModel.setStartTime(time, hour, minute) },
@@ -163,28 +121,22 @@ fun SettingsScreen(
         onUpdateDaysSelected = { viewModel.setUpdateDaysPref(it) },
         onAutoSortChanged = { viewModel.setAutoSort(it) },
         onRoundToTwoDpChanged = { viewModel.setRoundToTwoDp(it) },
-        onNotificationAlertsChanged = {
-            viewModel.setReceiveNotificationAlerts(receive = it)
-            if (!notificationPermissionState.status.isGranted) {
-                notificationPermissionState.launchPermissionRequest()
-            }
-        },
         onSharePortfolio = { shareLauncher.launch("portfolio.txt") },
-        onImportPortfolio = { importLauncher.launch(arrayOf("application/json", "text/plain")) },
+        onImportPositions = { showImportDialog = true },
         onExportPortfolio = { exportLauncher.launch("portfolio.json") },
-        onReportBug = {
-            CustomTabs.openTab(context, R.string.github_bug_report_new_issue_url, primaryColor.toArgb())
+        onAShareDataSourceSelected = { viewModel.setAShareDataSource(it) },
+        onOpenSource = { CustomTabs.openTab(context, GITHUB_URL, primaryColor.toArgb()) },
+        importPositionsTitle = stringResource(id = R.string.action_import_positions),
+        importPositionsSubtitle = stringResource(id = R.string.import_positions_desc),
+        importPositionsTemplateTitle = stringResource(id = R.string.import_positions_template),
+        onCopyTemplate = {
+            clipboard.setPrimaryClip(
+                ClipData.newPlainText("csv_template", POSITIONS_CSV_TEMPLATE)
+            )
+            context.showDialog(R.string.positions_import_template_copied)
         },
-        onFeatureRequest = {
-            CustomTabs.openTab(context, R.string.github_feature_request_new_issue_url, primaryColor.toArgb())
-        },
-        onPrivacyPolicy = {
-            CustomTabs.openTab(context, R.string.privacy_policy_url, primaryColor.toArgb())
-        },
-        onOpenSource = {
-            CustomTabs.openTab(context, R.string.checkout_open_source, primaryColor.toArgb())
-        },
-        onVersionTap = { offset -> onVersionTap.onTap(offset) },
+        aShareDataSourceTitle = stringResource(id = R.string.a_share_data_source),
+        aShareDataSources = stringArrayResource(id = R.array.a_share_data_sources),
         modifier = modifier,
         showAlarmPermissionRequest = showAlarmPermissionRequest,
         alarmPermissionBanner = { AlarmPermissionBanner() },
@@ -196,6 +148,52 @@ fun SettingsScreen(
             rememberScrollToTopAction(HomeRoute.Settings, scrollToTop = scrollToTop)
         },
     )
+
+    if (showImportDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportDialog = false },
+            title = { Text(text = stringResource(id = R.string.action_import_positions)) },
+            text = {
+                OutlinedTextField(
+                    value = csvText,
+                    onValueChange = { csvText = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(text = stringResource(id = R.string.import_positions_desc)) },
+                    singleLine = false,
+                    minLines = 6,
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            val count = viewModel.importPositionsFromText(csvText)
+                            showImportDialog = false
+                            val message = when {
+                                count == null -> context.getString(R.string.positions_import_fail)
+                                count == 0 -> context.getString(R.string.positions_import_empty)
+                                else -> context.getString(R.string.positions_import_success, count)
+                            }
+                            context.showDialog(message)
+                        }
+                    }
+                ) { Text(text = stringResource(id = R.string.action_import)) }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        clipboard.setPrimaryClip(
+                            ClipData.newPlainText("csv_template", POSITIONS_CSV_TEMPLATE)
+                        )
+                        context.showDialog(R.string.positions_import_template_copied)
+                    }
+                ) { Text(text = stringResource(id = R.string.import_positions_template)) }
+                TextButton(onClick = { showImportDialog = false }) {
+                    Text(text = stringResource(id = R.string.cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -207,7 +205,7 @@ private fun AlarmPermissionBanner() {
         Box(
             modifier = Modifier.background(
                 color = MaterialTheme.colorScheme.secondaryContainer,
-                shape = RoundedCornerShape(20.dp),
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
             ),
         ) {
             Row(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
@@ -225,7 +223,7 @@ private fun AlarmPermissionBanner() {
                 TextButton(
                     modifier = Modifier.align(Alignment.CenterVertically),
                     onClick = {
-                        if (VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        if (VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                             context.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM))
                         }
                     },
@@ -240,39 +238,14 @@ private fun AlarmPermissionBanner() {
     }
 }
 
-class OnVersionTap(val context: Context) {
-    var numberOfTaps = 0
-    var lastTapTimeMs = 0L
-    var countToast: Toast? = null
+private const val GITHUB_URL = "https://github.com/DaLiangWang/StockTicker"
 
-    fun onTap(_offset: Offset) {
-        if (System.currentTimeMillis() - lastTapTimeMs < ViewConfiguration.getDoubleTapTimeout()) {
-            numberOfTaps++
-            if (numberOfTaps > 0) {
-                if (numberOfTaps < 5) {
-                    countToast?.cancel()
-                    val toast = Toast.makeText(
-                        context,
-                        context.getString(R.string.db_tap_count, 5 - numberOfTaps),
-                        Toast.LENGTH_SHORT
-                    )
-                    toast.setGravity(Gravity.CENTER, 0, 0)
-                    toast.show()
-                    countToast = toast
-                } else {
-                    countToast?.cancel()
-                    val toast = Toast.makeText(context, R.string.discovered_db, Toast.LENGTH_LONG)
-                    toast.setGravity(Gravity.CENTER, 0, 0)
-                    toast.show()
-                    context.startActivity(Intent(context, DbViewerActivity::class.java))
-                    numberOfTaps = 0
-                    lastTapTimeMs = 0
-                }
-            }
-        } else {
-            countToast?.cancel()
-            numberOfTaps = 1
-        }
-        lastTapTimeMs = System.currentTimeMillis()
-    }
-}
+private const val POSITIONS_CSV_TEMPLATE = "symbol,market,name,quantity,cost_price,currency,note\n" +
+    "515210,a,钢铁ETF国泰,2800,1.1733,CNY,\n" +
+    "600022,a,山东钢铁,3800,1.3713,CNY,\n" +
+    "600066,a,宇通客车,300,30.5970,CNY,\n" +
+    "600819,a,耀皮玻璃,1800,5.7723,CNY,\n" +
+    "600825,a,新华传媒,1900,5.2901,CNY,\n" +
+    "605368,a,蓝天燃气,1500,7.0147,CNY,\n" +
+    "002756,a,永兴材料,100,46.0010,CNY,\n" +
+    "159516,a,半导体设备ETF国泰,13300,0.7032,CNY,"

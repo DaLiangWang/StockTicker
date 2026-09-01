@@ -19,7 +19,6 @@ import com.github.premnirmal.ticker.model.AlarmScheduler
 import com.github.premnirmal.ticker.model.FetchEventLogger
 import com.github.premnirmal.ticker.model.IStocksProvider
 import com.github.premnirmal.ticker.model.StocksProvider
-import com.github.premnirmal.ticker.network.CrumbStore
 import com.github.premnirmal.ticker.notifications.NotificationsHandler
 import com.github.premnirmal.ticker.repo.QuoteStorage
 import com.github.premnirmal.ticker.repo.QuotesDB
@@ -66,7 +65,7 @@ val appModule = module {
     single { WorkManager.getInstance(androidContext()) }
 
     single { AppPreferences(get()) }
-    single<CrumbStore> { get<AppPreferences>() }
+
     single<UserPreferences> { get<AppPreferences>() }
 
     single { WidgetDataProvider(androidContext()) }

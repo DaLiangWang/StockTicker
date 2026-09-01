@@ -11,11 +11,11 @@ import com.github.premnirmal.tickerwidget.ui.theme.SharedColours
  * and iOS share.
  */
 val Quote.changeColour: Color
-    @Composable get() = if (isUp) SharedColours.ChangePositive else SharedColours.ChangeNegative
+    @Composable get() = if (isUp) SharedColours.ChangeUpColour else SharedColours.ChangeDownColour
 
 /**
  * Compose-aware colour for a [ChartData]'s change. Lives in `commonMain` for the same reason as
  * [Quote.changeColour]: the [ChartData] model stays free of Compose theming.
  */
 val ChartData.changeColour: Color
-    @Composable get() = if (isUp) SharedColours.ChangePositive else SharedColours.ChangeNegative
+    @Composable get() = if (isUp) SharedColours.ChangeUpColour else SharedColours.ChangeDownColour

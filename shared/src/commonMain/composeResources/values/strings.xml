@@ -1,5 +1,10 @@
 <resources>
     <string name="remove">Remove</string>
+    <string name="stock_name">Stock</string>
+    <string name="today_profit">Today P&amp;L</string>
+    <string name="total_profit">Total P&amp;L</string>
+    <string name="cost_price">Cost</string>
+    <string name="market_cap">Mkt Cap</string>
     <string name="holdings">Holdings</string>
     <string name="gain">Gain</string>
     <string name="loss">Loss</string>
@@ -11,4 +16,14 @@
     <string name="select_widget">Select Widget</string>
     <string name="save">Save</string>
     <string name="last_and_next_fetch">Last fetch: %1$s\nNext fetch: %2$s</string>
+    <string name="market_value">Market Value</string>
+    <string name="today_gain_loss">Today\'s P&amp;L</string>
+    <string name="total_gain_loss">Total P&amp;L</string>
+    <string name="total_return_percent">Total Return</string>
+    <string name="widget_title_today">Today</string>
+    <string name="widget_title_total">Total</string>
+    <string name="widget_title_market_value">Assets</string>
+    <string name="widget_currency_holdings">CNY · %1$d positions</string>
+    <string name="shares_with_cost">%1$s · cost %2$s</string>
+    <string name="total_gain_amount">Total %1$s</string>
 </resources>

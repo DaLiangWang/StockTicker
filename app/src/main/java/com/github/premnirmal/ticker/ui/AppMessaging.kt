@@ -20,9 +20,6 @@ class AppMessaging constructor(
     val bottomSheets: Flow<BottomSheetMessage>
         get() = _messageQueue.filterIsInstance(BottomSheetMessage::class)
 
-    val banners: Flow<AppMessage.BannerMessage>
-        get() = _messageQueue.filterIsInstance(AppMessage.BannerMessage::class)
-
     private val _messageQueue = MutableSharedFlow<AppMessage>(replay = 0, extraBufferCapacity = 100)
 
     fun sendSnackbar(
@@ -41,22 +38,6 @@ class AppMessaging constructor(
         coroutineScope.launch {
             snackbarHostState.showSnackbar(
                 message
-            )
-        }
-    }
-
-    fun sendBanner(
-        title: Int,
-        message: Int,
-        onClick: (() -> Unit)? = null,
-    ) {
-        coroutineScope.launch {
-            _messageQueue.emit(
-                AppMessage.BannerMessage(
-                    title = context.getString(title),
-                    message = context.getString(message),
-                    onClick = onClick,
-                )
             )
         }
     }

@@ -44,7 +44,7 @@ class StocksProvider constructor(
         private const val CONSECUTIVE_FETCH_FAILURES = "CONSECUTIVE_FETCH_FAILURES"
         private const val MIN_SCHEDULE_MS = 15_000L
         private const val MAX_FAILURE_BACKOFF_MS = 30 * 60 * 1000L
-        private val DEFAULT_STOCKS = arrayOf("^GSPC", "^DJI", "GOOG", "AAPL", "MSFT")
+        private val DEFAULT_STOCKS = arrayOf("sh000001", "sz399001")
         const val DEFAULT_INTERVAL_MS: Long = 15_000L
     }
 
@@ -344,7 +344,10 @@ class StocksProvider constructor(
         val quote: Quote?
         var position: Position
         synchronized(quoteMap) {
-            quote = quoteMap[ticker]
+            // A CSV import adds holdings immediately after addStocks(), i.e. before the first fetch
+            // has populated the map, so make sure a quote exists — otherwise `quote?.position` below
+            // was a no-op and the holding only reached the database, never the portfolio list.
+            quote = quoteMap[ticker] ?: Quote(symbol = ticker).also { quoteMap[ticker] = it }
             position = getPosition(ticker) ?: Position(ticker)
             if (!tickerSet.contains(ticker)) {
                 tickerSet.add(ticker)

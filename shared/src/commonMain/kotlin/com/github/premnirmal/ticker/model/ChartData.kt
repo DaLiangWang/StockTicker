@@ -1,6 +1,9 @@
 package com.github.premnirmal.ticker.model
 
 import com.github.premnirmal.ticker.components.AppNumberFormat
+import com.github.premnirmal.ticker.components.percentString
+import com.github.premnirmal.ticker.components.signedPercent
+import com.github.premnirmal.ticker.components.signedValue
 import com.github.premnirmal.ticker.network.data.DataPoint
 
 /**
@@ -30,22 +33,9 @@ data class ChartData(
 
     fun changeString(): String = AppNumberFormat.selected.format(change)
 
-    fun changeStringWithSign(): String {
-        val changeString = AppNumberFormat.selected.format(change)
-        if (change >= 0) {
-            return "+$changeString"
-        }
-        return changeString
-    }
+    fun changeStringWithSign(): String = signedValue(change)
 
-    fun changePercentString(): String =
-        "${AppNumberFormat.TWO_DP.format(changeInPercent)}%"
+    fun changePercentString(): String = percentString(changeInPercent)
 
-    fun changePercentStringWithSign(): String {
-        val changeString = "${AppNumberFormat.TWO_DP.format(changeInPercent)}%"
-        if (changeInPercent >= 0) {
-            return "+$changeString"
-        }
-        return changeString
-    }
+    fun changePercentStringWithSign(): String = signedPercent(changeInPercent)
 }

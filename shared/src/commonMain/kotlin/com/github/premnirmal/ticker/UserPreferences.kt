@@ -105,6 +105,17 @@ interface UserPreferences {
   /** Records that the add/remove tooltip was shown once more. */
   fun setAddRemoveTooltipShown()
 
+  // --- A-share (mainland China) data source ---
+
+  /**
+   * Which mainland-China data source A-share quotes are fetched from:
+   * [A_SHARE_SOURCE_TENCENT] or [A_SHARE_SOURCE_EAST_MONEY].
+   */
+  var aShareDataSourcePref: Int
+
+  /** The selected A-share data source as an observable flow. */
+  val aShareDataSourceFlow: Flow<Int>
+
   // --- Configured update window (platform-neutral) ---
 
   /** The configured start of the daily update window (default 09:30). */
@@ -137,5 +148,11 @@ interface UserPreferences {
 
     /** [themePref] value for following the system theme. */
     const val FOLLOW_SYSTEM_THEME = 2
+
+    /** [aShareDataSourcePref] value for the Tencent Finance (腾讯财经) A-share source. */
+    const val A_SHARE_SOURCE_TENCENT = 0
+
+    /** [aShareDataSourcePref] value for the East Money (东方财富) A-share source. */
+    const val A_SHARE_SOURCE_EAST_MONEY = 1
   }
 }

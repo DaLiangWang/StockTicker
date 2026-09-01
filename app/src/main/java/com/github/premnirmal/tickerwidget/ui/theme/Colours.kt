@@ -77,14 +77,6 @@ internal object ColourPaletteLight {
     val divider = Color(0xFFaaaaaa)
     val card_bg = Color(0xFFfbfcfa)
     val card_shadow = Color(0x10000000)
-
-    val change_positive = Color(0xFF66BB6A)
-    val change_negative = Color(0xFFEF5350)
-    val error_red = Color(0xFFff3232)
-    val negative_red = Color(0xFFe55b5b)
-    val positive_green = Color(0xFF009900)
-    val positive_green_dark = Color(0xFF006b00)
-    val text_2 = Color(0xFF6e6e6e)
 }
 
 internal object ColourPaletteDark {
@@ -94,14 +86,6 @@ internal object ColourPaletteDark {
     val divider = Color(0xFFaaaaaa)
     val card_bg = Color(0xFF1d1d1d)
     val card_shadow = Color(0x95000000)
-
-    val change_positive = Color(0xFF66BB6A)
-    val change_negative = Color(0xFFEF5350)
-    val error_red = Color(0xFFff3232)
-    val negative_red = Color(0xFFff6666)
-    val positive_green = Color(0xFFccff66)
-    val positive_green_dark = Color(0xFF009900)
-    val text_2 = Color(0xfff3f3f3)
 }
 
 /**
@@ -109,14 +93,14 @@ internal object ColourPaletteDark {
  * [SharedColours] (the values live in `:shared` `commonMain`) so Android and iOS stay in sync.
  */
 object ColourPalette {
-    val ChangePositive: Color
-        @Composable get() = SharedColours.ChangePositive
-    val ChangeNegative: Color
-        @Composable get() = SharedColours.ChangeNegative
-    val PositiveGreen: Color
-        @Composable get() = SharedColours.PositiveGreen
-    val NegativeRed: Color
-        @Composable get() = SharedColours.NegativeRed
+    val ChangeUpColour: Color
+        @Composable get() = SharedColours.ChangeUpColour
+    val ChangeDownColour: Color
+        @Composable get() = SharedColours.ChangeDownColour
+    val UpColour: Color
+        @Composable get() = SharedColours.UpColour
+    val DownColour: Color
+        @Composable get() = SharedColours.DownColour
 
     val ImagePlaceHolderGray = SharedColours.ImagePlaceHolderGray
 }

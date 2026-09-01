@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
 
-  <string name="widget_label" translatable="false">Stocks Widget</string>
+  <string name="widget_label">Stocks Widget</string>
   <string name="google_news_endpoint" translatable="false">https://news.google.com/</string>
   <string name="yahoo_news_endpoint" translatable="false">https://finance.yahoo.com/news/</string>
   <string name="yahoo_finance_endpoint" translatable="false">https://finance.yahoo.com/</string>
@@ -12,10 +12,12 @@
   <string name="historical_data_endpoint" translatable="false">https://query1.finance.yahoo.com/v8/finance/</string>
   <string name="github_endoint" translatable="false">https://api.github.com/</string>
   <string name="apewisdom_endpoint" translatable="false">https://apewisdom.io/api/v1.0/</string>
-  <string name="checkout_open_source" translatable="false">https://github.com/premnirmal/StockTicker</string>
+  <string name="tencent_finance_endpoint" translatable="false">https://qt.gtimg.cn/</string>
+  <string name="eastmoney_endpoint" translatable="false">https://push2.eastmoney.com/api/qt/</string>
+  <string name="checkout_open_source" translatable="false">https://github.com/DaLiangWang/StockTicker</string>
   <string name="privacy_policy_url" translatable="false">https://github.com/premnirmal/privacy/blob/master/STOCKTICKER_PRIVACY.md</string>
-  <string name="github_bug_report_new_issue_url" translatable="false">https://github.com/premnirmal/StockTicker/issues/new?template=bug_report.md</string>
-  <string name="github_feature_request_new_issue_url" translatable="false">https://github.com/premnirmal/StockTicker/issues/new?template=feature_request.md</string>
+  <string name="github_bug_report_new_issue_url" translatable="false">https://github.com/DaLiangWang/StockTicker/issues/new?template=bug_report.md</string>
+  <string name="github_feature_request_new_issue_url" translatable="false">https://github.com/DaLiangWang/StockTicker/issues/new?template=feature_request.md</string>
   <string name="dotdotdot" translatable="false">…</string>
 
   <string name="portfolio">Portfolio</string>
@@ -239,4 +241,45 @@
 
   <string name="exact_alarm_permission_required_message">The exact alarm permission is required to refresh the widget in a timely manner.</string>
   <string name="go_to_settings">Grant</string>
+
+  <!-- Portfolio P&L -->
+  <string name="portfolio_summary">Portfolio Summary</string>
+  <string name="today_gain_loss">Today\'s P&amp;L</string>
+  <string name="total_gain_loss">Total P&amp;L</string>
+  <string name="market_value">Market Value</string>
+  <string name="total_cost">Total Cost</string>
+  <string name="today_gain_loss_percent">Today\'s P&amp;L %</string>
+  <string name="total_gain_loss_percent">Total Return %</string>
+
+  <!-- Position import -->
+  <string name="action_import_positions">Import positions</string>
+  <string name="import_positions_desc">Paste a CSV (symbol,market,name,quantity,cost_price[,currency,note]), one position per line</string>
+  <string name="import_positions_template">Copy CSV template</string>
+  <string name="positions_import_template_copied">CSV template copied to clipboard</string>
+  <string name="positions_import_success">Imported %1$d positions successfully</string>
+  <string name="positions_import_fail">Error importing positions, check the file format</string>
+  <string name="positions_import_empty">No valid positions found in the file</string>
+  <string name="import_positions_format_hint">Supported format (one per line, comma or tab separated):\nsymbol,shares,cost\ne.g.\nsh600519,100,1650.00\nAAPL,10,180.50\n\nShares and cost may be left empty to import the symbol only. A header row is skipped automatically.</string>
+
+  <!-- Widget P&L monitor -->
+  <string name="widget_show_market_value">Show market value</string>
+  <string name="widget_show_market_value_desc">Show the portfolio market value in the widget</string>
+  <string name="widget_show_today_gain_loss">Show today\'s P&amp;L</string>
+  <string name="widget_show_today_gain_loss_desc">Show today\'s portfolio P&amp;L in the widget</string>
+  <string name="widget_show_total_gain_loss">Show total P&amp;L</string>
+  <string name="widget_show_total_gain_loss_desc">Show the total portfolio P&amp;L in the widget</string>
+
+  <!-- Data source -->
+  <string name="a_share_data_source">A-share data source</string>
+  <string name="a_share_data_source_desc">Where A-share quotes are fetched from</string>
+
+  <!-- Misc. strings previously hard-coded in Kotlin -->
+  <string name="widget_default_name">Widget #%1$d</string>
+  <string name="widget_title_today">Today</string>
+  <string name="widget_title_total">Total</string>
+  <string name="widget_title_market_value">Assets</string>
+  <string name="widget_currency_holdings">CNY · %1$d positions</string>
+  <string name="font_size_deprecated_message">Font size is a deprecated setting, it will be removed in a future version!</string>
+  <string name="notification_channel_alerts_name">Alerts</string>
+  <string name="notification_channel_summary_name">Summary</string>
 </resources>

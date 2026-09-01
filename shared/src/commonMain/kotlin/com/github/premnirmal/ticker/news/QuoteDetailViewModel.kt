@@ -8,10 +8,7 @@ import com.github.premnirmal.ticker.model.FetchResult
 import com.github.premnirmal.ticker.model.HistoryProvider
 import com.github.premnirmal.ticker.model.IStocksProvider
 import com.github.premnirmal.ticker.model.Range
-import com.github.premnirmal.ticker.network.NewsProvider
 import com.github.premnirmal.ticker.network.data.Quote
-import com.github.premnirmal.ticker.network.data.QuoteSummary
-import com.github.premnirmal.ticker.news.NewsFeedItem.ArticleNewsFeed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
@@ -35,7 +32,6 @@ import kotlinx.coroutines.launch
  */
 class QuoteDetailViewModel constructor(
     private val stocksProvider: IStocksProvider,
-    private val newsProvider: NewsProvider,
     private val historyProvider: HistoryProvider,
     private val userPreferences: UserPreferences,
 ) : ViewModel() {
@@ -52,11 +48,8 @@ class QuoteDetailViewModel constructor(
     private val _dataFetchError = MutableStateFlow<Throwable?>(null)
     val dataFetchError: StateFlow<Throwable?>
         get() = _dataFetchError
-    private val _newsData = MutableStateFlow<List<ArticleNewsFeed>>(emptyList())
-    val newsData: StateFlow<List<ArticleNewsFeed>>
-        get() = _newsData
 
-    /** Snackbar messages (e.g. a news fetch failure) for the host to surface. */
+    /** Snackbar messages for the host to surface. */
     val messages: SharedFlow<String>
         get() = _messages
     private val _messages = MutableSharedFlow<String>(0, extraBufferCapacity = 16)
@@ -65,17 +58,15 @@ class QuoteDetailViewModel constructor(
         get() = userPreferences.showAddRemoveTooltip
 
     private var fetchQuoteJob: Job? = null
-    private var quoteSummary: QuoteSummary? = null
     val range = MutableStateFlow<Range>(Range.ONE_DAY)
 
     fun loadQuote(ticker: String) = viewModelScope.launch {
-        quoteSummary = null
         if (stocksProvider.hasTicker(ticker)) {
             val stock = stocksProvider.getStock(ticker)
             stock?.let {
                 _quote.emit(
                     FetchResult.success(
-                        QuoteWithSummary(it, quoteSummary)
+                        QuoteWithSummary(it)
                     )
                 )
             }
@@ -86,7 +77,6 @@ class QuoteDetailViewModel constructor(
         _isRefreshing.value = true
         viewModelScope.launch {
             fetchQuoteInternal(ticker = quote.symbol)
-            fetchNewsInternal(quote = quote, truncate = false)
             fetchChartDataInternal(symbol = quote.symbol, selectedRange = range.value)
             _isRefreshing.value = false
         }
@@ -101,10 +91,9 @@ class QuoteDetailViewModel constructor(
     }
 
     private suspend fun fetchQuoteInternal(ticker: String) {
-        quoteSummary = null
         val fetchStock = stocksProvider.fetchStock(ticker)
         if (fetchStock.wasSuccessful) {
-            _quote.emit(FetchResult.success(QuoteWithSummary(fetchStock.data, quoteSummary)))
+            _quote.emit(FetchResult.success(QuoteWithSummary(fetchStock.data)))
         } else {
             _quote.emit(FetchResult.failure(fetchStock.error))
         }
@@ -120,7 +109,7 @@ class QuoteDetailViewModel constructor(
                 val result = stocksProvider.fetchStock(symbol, allowCache = false)
                 if (result.wasSuccessful) {
                     isMarketOpen = result.data.isMarketOpen
-                    _quote.emit(FetchResult.success(QuoteWithSummary(result.data, quoteSummary)))
+                    _quote.emit(FetchResult.success(QuoteWithSummary(result.data)))
                 }
                 delay(REAL_TIME_INTERVAL_MS)
             } while (isActive && result.wasSuccessful && isMarketOpen)
@@ -136,12 +125,6 @@ class QuoteDetailViewModel constructor(
      * (e.g. the iOS quote-detail screen) load the article list without re-running the quote/chart
      * fetches that [fetchAll] performs.
      */
-    fun fetchNews(quote: Quote) {
-        viewModelScope.launch {
-            fetchNewsInternal(quote = quote, truncate = false)
-        }
-    }
-
     fun fetchChartData(symbol: String, range: Range) {
         viewModelScope.launch {
             fetchChartDataInternal(symbol, range)
@@ -166,29 +149,6 @@ class QuoteDetailViewModel constructor(
         }
     }
 
-    private suspend fun fetchNewsInternal(
-        quote: Quote,
-        truncate: Boolean = true
-    ) {
-        val query = quote.newsQuery()
-        val result = newsProvider.fetchNewsForQuery(query)
-        when {
-            result.wasSuccessful -> {
-                val newsFeeds = result.data.map { ArticleNewsFeed(it) }
-                if (truncate) {
-                    _newsData.value = newsFeeds.take(8)
-                } else {
-                    _newsData.value = newsFeeds
-                }
-            }
-            else -> {
-                result.error.message?.let {
-                    _messages.tryEmit(it)
-                }
-            }
-        }
-    }
-
     fun addRemoveTooltipShown() {
         userPreferences.setAddRemoveTooltipShown()
     }
@@ -196,15 +156,13 @@ class QuoteDetailViewModel constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     fun reset() {
         fetchQuoteJob?.cancel()
-        _newsData.value = emptyList()
         _data.value = null
         _quote.resetReplayCache()
         _dataFetchError.value = null
     }
 
     data class QuoteWithSummary(
-        val quote: Quote,
-        val quoteSummary: QuoteSummary?
+        val quote: Quote
     )
 
     private companion object {
