@@ -127,6 +127,17 @@ val MIGRATION_8_9 = object : Migration(8, 9) {
     }
 }
 
+/**
+ * Migration from version 9 of the database to version 10:
+ * Add column 'type' (buy/sell ledger direction, 0 = buy) in table HoldingRow. Every holding that
+ * predates the column is a plain purchase, so it defaults to [HOLDING_TYPE_BUY] (0).
+ */
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("ALTER TABLE `HoldingRow` ADD COLUMN `type` INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 /** The full ordered migration chain, applied by [com.github.premnirmal.ticker.repo.buildQuotesDB]. */
 val allMigrations: Array<Migration> = arrayOf(
     MIGRATION_1_2,
@@ -136,5 +147,6 @@ val allMigrations: Array<Migration> = arrayOf(
     MIGRATION_5_6,
     MIGRATION_6_7,
     MIGRATION_7_8,
-    MIGRATION_8_9
+    MIGRATION_8_9,
+    MIGRATION_9_10
 )

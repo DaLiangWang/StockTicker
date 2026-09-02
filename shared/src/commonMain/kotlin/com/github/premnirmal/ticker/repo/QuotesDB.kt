@@ -14,7 +14,7 @@ import com.github.premnirmal.ticker.repo.migrations.allMigrations
 
 @Database(
     entities = [QuoteRow::class, HoldingRow::class, PropertiesRow::class, FetchLogRow::class],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 @ConstructedBy(QuotesDBConstructor::class)
@@ -41,6 +41,10 @@ fun buildQuotesDB(builder: RoomDatabase.Builder<QuotesDB>): QuotesDB {
     return builder
         .addMigrations(*allMigrations)
         .setDriver(BundledSQLiteDriver())
-        .setQueryCoroutineContext(ioDispatcher)
+        // The bundled driver opens a fresh connection per query and has no busy timeout, so
+        // concurrent writers (e.g. a fetch's upsert racing a positions import) fail immediately
+        // with SQLITE_BUSY. Serialising every DB operation onto a single-threaded context removes
+        // the write contention entirely — DB throughput here is far below what one thread allows.
+        .setQueryCoroutineContext(ioDispatcher.limitedParallelism(1))
         .build()
 }

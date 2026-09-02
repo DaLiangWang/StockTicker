@@ -2,6 +2,7 @@ package com.github.premnirmal.ticker.repo
 
 import com.github.premnirmal.ticker.repo.migrations.MIGRATION_1_2
 import com.github.premnirmal.ticker.repo.migrations.MIGRATION_8_9
+import com.github.premnirmal.ticker.repo.migrations.MIGRATION_9_10
 import com.github.premnirmal.ticker.repo.migrations.allMigrations
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -14,7 +15,7 @@ import kotlin.test.assertTrue
  */
 class MigrationsTest {
 
-    private val databaseVersion = 9
+    private val databaseVersion = 10
 
     @Test
     fun allMigrations_formContiguousChainUpToDatabaseVersion() {
@@ -32,6 +33,7 @@ class MigrationsTest {
         assertEquals(databaseVersion, allMigrations.last().endVersion)
         assertTrue(allMigrations.contains(MIGRATION_1_2))
         assertTrue(allMigrations.contains(MIGRATION_8_9))
+        assertTrue(allMigrations.contains(MIGRATION_9_10))
     }
 
     @Test

@@ -55,6 +55,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
+import timber.log.Timber
 
 /**
  * Android host for the shared [com.github.premnirmal.ticker.widget.WidgetsScreen]. Resolves the Koin
@@ -220,13 +221,19 @@ fun WidgetsScreen(
                                 showImportDialog = false
                                 return@launch
                             }
-                            val count = widget.importPositions(csvText)
-                            showImportDialog = false
-                            val message = when {
-                                count == null -> context.getString(R.string.positions_import_fail)
-                                count == 0 -> context.getString(R.string.positions_import_empty)
-                                else -> context.getString(R.string.positions_import_success, count)
+                            val message = try {
+                                when (val count = widget.importPositions(csvText)) {
+                                    null -> context.getString(R.string.positions_import_fail)
+                                    0 -> context.getString(R.string.positions_import_empty)
+                                    else -> context.getString(R.string.positions_import_success, count)
+                                }
+                            } catch (e: Exception) {
+                                // The import must never take the app down: log the failure (for the
+                                // logcat-driven root-cause analysis) and surface the error instead.
+                                Timber.e(e, "Positions import failed")
+                                context.getString(R.string.positions_import_fail)
                             }
+                            showImportDialog = false
                             context.showDialog(message)
                         }
                     }
