@@ -1,9 +1,9 @@
 package com.github.premnirmal.ticker.portfolio.search
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.tickerwidget.ui.theme.AppTheme
 import com.github.premnirmal.tickerwidget.ui.theme.SelectedTheme
 import org.koin.androidx.compose.koinViewModel
@@ -19,7 +19,7 @@ fun AddSymbolDialog(
     onDismissRequest: () -> Unit = {},
 ) {
     val viewModel = koinViewModel<SuggestionViewModel>(key = symbol) { parametersOf(symbol) }
-    val suggestionState by viewModel.suggestionState.collectAsState(SuggestionState(symbol, emptyList()))
+    val suggestionState by viewModel.suggestionState.collectAsStateWithLifecycle(SuggestionState(symbol, emptyList()))
     AddSymbolDialogContent(
         suggestionState = suggestionState,
         onDismissRequest = onDismissRequest,

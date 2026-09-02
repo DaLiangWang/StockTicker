@@ -8,18 +8,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
 import androidx.glance.GlanceTheme
-import androidx.glance.Image
 import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.action.ActionParameters
 import androidx.glance.action.actionParametersOf
 import androidx.glance.action.actionStartActivity
 import androidx.glance.action.clickable
-import androidx.glance.appwidget.CircularProgressIndicator
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetManager
 import androidx.glance.appwidget.SizeMode
@@ -40,7 +37,6 @@ import androidx.glance.layout.fillMaxWidth
 import androidx.glance.layout.padding
 import androidx.glance.layout.size
 import androidx.glance.layout.wrapContentHeight
-import androidx.glance.layout.wrapContentSize
 import androidx.glance.preview.ExperimentalGlancePreviewApi
 import androidx.glance.preview.Preview
 import androidx.glance.state.GlanceStateDefinition
@@ -334,30 +330,18 @@ private fun Header(
         modifier = GlanceModifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        // Refresh button on the left, clock on the right.
-        if (widgetData.showRefreshButton) {
-            Box(
-                modifier = GlanceModifier.wrapContentSize().clickable(
-                    onClick = actionRunCallback<RefreshCallback>()
-                ),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (widgetData.isRefreshing) {
-                    CircularProgressIndicator(
-                        modifier = GlanceModifier.size(18.dp),
-                        color = ColorProvider(R.color.text_widget_header),
-                    )
-                } else {
-                    Image(
-                        modifier = GlanceModifier.size(18.dp),
-                        provider = ImageProvider(R.drawable.ic_refresh),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(ColorProvider(R.color.text_widget_header)),
-                    )
-                }
-            }
-        }
-
+        // Widget name on the left, clock on the right.
+        Text(
+            modifier = GlanceModifier.defaultWeight().padding(horizontal = 2.dp),
+            text = widgetData.name,
+            style = TextStyle(
+                color = ColorProvider(R.color.text_widget_header),
+                fontSize = TextUnit(HEADER_TIME_FONT_SIZE, TextUnitType.Sp),
+                textAlign = TextAlign.Start,
+                fontWeight = FontWeight.Normal,
+            ),
+            maxLines = 1,
+        )
         Text(
             modifier = GlanceModifier.defaultWeight().padding(horizontal = 2.dp),
             text = lastUpdatedText,

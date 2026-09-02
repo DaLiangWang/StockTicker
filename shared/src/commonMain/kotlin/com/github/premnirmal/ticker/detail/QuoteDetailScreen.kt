@@ -16,12 +16,10 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells.Adaptive
 import androidx.compose.foundation.lazy.grid.GridCells.Fixed
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -32,28 +30,17 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -98,7 +85,6 @@ data class QuoteDetailItem(
  * string-resource dependency.
  */
 data class QuoteDetailStrings(
-    val addToPortfolio: String,
     val graphFetchFailed: String,
     val rangeOneDay: String,
     val rangeTwoWeeks: String,
@@ -125,7 +111,7 @@ data class QuoteDetailStrings(
  * navigation and dependency-injection input is hoisted as a parameter so the screen renders only
  * the plain state it is given and raises events as lambdas:
  *  - the already-fetched/derived state ([quote]/[chartData]/[details]/[articles]/[website]/
- *    [longBusinessSummary]/[isInPortfolio]/[isRefreshing]/[showAddRemoveTooltip]/[range]/
+ *    [longBusinessSummary]/[isInPortfolio]/[isRefreshing]/[range]/
  *    [graphError]/[position]/[alertAbove]/[alertBelow]/[notes]/[displayname]) as plain values,
  *  - the resolved change/up/down colours ([changeColour]/[upColor]/[downColor]) as [Color]s (the
  *    `ColourPalette`/Compose theming stays in `:app`),
@@ -136,8 +122,8 @@ data class QuoteDetailStrings(
  *  - the per-section edit navigation, refresh, range selection, tooltip-shown and bottom-sheet
  *    card-tap events as callback lambdas,
  *  - the snackbar host as [snackbarHostState] (the host owns `AppMessaging`),
- *  - the `AppCard` container, `NewsCard`, `AddSymbolDialog` and website `LinkText` as composable
- *    slots ([card]/[newsCard]/[addSymbolDialog]/[websiteLink]) — they still pull in the
+ *  - the `AppCard` container, `NewsCard` and website `LinkText` as composable
+ *    slots ([card]/[newsCard]/[websiteLink]) — they still pull in the
  *    (not-yet-shared) `:UI`/`:app` theme/resources on Android,
  *  - the fading-edge decoration as [listFadingEdges] (Android `RuntimeShader`),
  *  - the optional adaptive two-pane layout as [twoPane] (null = single column).
@@ -156,7 +142,6 @@ fun QuoteDetailScreen(
     details: List<QuoteDetailItem>,
     isInPortfolio: Boolean,
     isRefreshing: Boolean,
-    showAddRemoveTooltip: Boolean,
     range: Range,
     graphError: Boolean,
     position: Position?,
@@ -164,11 +149,9 @@ fun QuoteDetailScreen(
     displayname: String,
     strings: QuoteDetailStrings,
     refreshIcon: Painter,
-    addIcon: Painter,
     editIcon: Painter,
     snackbarHostState: SnackbarHostState,
     onRefresh: () -> Unit,
-    onAddRemoveTooltipShown: () -> Unit,
     onCardClick: (title: String, data: String) -> Unit,
     onEditPositions: () -> Unit,
     onEditNotes: () -> Unit,
@@ -180,11 +163,9 @@ fun QuoteDetailScreen(
     card: @Composable (modifier: Modifier, onClick: () -> Unit, content: @Composable ColumnScope.() -> Unit) -> Unit,
     modifier: Modifier = Modifier,
     navigationIcon: @Composable () -> Unit = {},
-    addSymbolDialog: @Composable (symbol: String, onDismissRequest: () -> Unit) -> Unit = { _, _ -> },
     listFadingEdges: (ScrollableState) -> Modifier = { Modifier },
     twoPane: (@Composable (first: @Composable () -> Unit, second: @Composable () -> Unit) -> Unit)? = null,
 ) {
-    var showAddRemoveDialog by remember { mutableStateOf(false) }
     val state = rememberLazyGridState()
     Scaffold(
         contentWindowInsets = WindowInsets(0.dp),
@@ -222,47 +203,7 @@ fun QuoteDetailScreen(
         snackbarHost = {
             SnackbarHost(hostState = snackbarHostState)
         },
-        floatingActionButton = {
-            val tooltipPosition = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above)
-            val tooltipState = rememberTooltipState(
-                initialIsVisible = false,
-                isPersistent = true,
-            )
-            LaunchedEffect(quote.symbol) {
-                if (showAddRemoveTooltip) {
-                    tooltipState.show()
-                    onAddRemoveTooltipShown()
-                }
-            }
-            FloatingActionButton(
-                modifier = Modifier.windowInsetsPadding(WindowInsets.navigationBars),
-                onClick = {
-                    showAddRemoveDialog = true
-                },
-            ) {
-                TooltipBox(
-                    positionProvider = tooltipPosition,
-                    state = tooltipState,
-                    tooltip = {
-                        Surface(
-                            color = MaterialTheme.colorScheme.surfaceTint,
-                            shape = MaterialTheme.shapes.medium,
-                        ) {
-                            Text(
-                                modifier = Modifier.padding(12.dp),
-                                text = strings.addToPortfolio,
-                            )
-                        }
-                    }
-                ) {
-                    Icon(
-                        painter = addIcon,
-                        contentDescription = null,
-                    )
-                }
-            }
-        },
-        floatingActionButtonPosition = FabPosition.End,
+
     ) { padding ->
         Box(
             modifier = Modifier.fillMaxSize()
@@ -325,11 +266,7 @@ fun QuoteDetailScreen(
                 )
             }
 
-            if (showAddRemoveDialog) {
-                addSymbolDialog(quote.symbol) {
-                    showAddRemoveDialog = false
-                }
-            }
+
         }
     }
 }

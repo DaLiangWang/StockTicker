@@ -4,12 +4,12 @@ import androidx.compose.material3.windowsizeclass.WindowHeightSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -69,7 +69,7 @@ fun HomeListDetail(
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
         }
         val viewModel: HomeViewModel = koinViewModel(viewModelStoreOwner = viewModelStoreOwner)
-        val hasWidget = viewModel.hasWidget.collectAsState(initial = false)
+        val hasWidget = viewModel.hasWidget.collectAsStateWithLifecycle(initialValue = false)
         val destinations = ArrayList<HomeBottomNavDestination>().apply {
             add(
                 HomeBottomNavDestination(

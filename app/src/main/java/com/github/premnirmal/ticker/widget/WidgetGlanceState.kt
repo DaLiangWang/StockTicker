@@ -58,7 +58,7 @@ data class SerializableWidgetState(
     @get:ColorRes
     val textColor: Int = 0,
     val isRefreshing: Boolean = false,
-    val showRefreshButton: Boolean = false,
+    val name: String = "",
     /** Whether the portfolio summary row shows the current market value (当前市值). */
     val showMarketValue: Boolean = true,
     /** Whether the portfolio summary row shows today's P&L (今日盈亏). */
@@ -95,7 +95,7 @@ data class SerializableWidgetState(
                 positiveTextColor = state.positiveTextColor,
                 negativeTextColor = state.negativeTextColor,
                 textColor = state.textColor,
-                showRefreshButton = state.showRefreshButton,
+                name = state.name,
                 showMarketValue = state.showMarketValue,
                 showTodayGainLoss = state.showTodayGainLoss,
                 showTotalGainLoss = state.showTotalGainLoss,

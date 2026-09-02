@@ -65,7 +65,6 @@ class AppPreferences constructor(
         const val FONT_SIZE = "FONT_SIZE"
         const val BOLD_CHANGE = "BOLD_CHANGE"
         const val SHOW_CURRENCY = "SHOW_CURRENCY"
-        const val SHOW_REFRESH = "SHOW_REFRESH"
         const val SHOW_MARKET_VALUE = "SHOW_MARKET_VALUE"
         const val SHOW_TODAY_GAIN_LOSS = "SHOW_TODAY_GAIN_LOSS"
         const val SHOW_TOTAL_GAIN_LOSS = "SHOW_TOTAL_GAIN_LOSS"

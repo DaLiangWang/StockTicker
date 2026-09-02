@@ -2,11 +2,9 @@ package com.github.premnirmal.ticker.home
 
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.github.premnirmal.ticker.detail.QuoteTableRow
@@ -32,21 +30,17 @@ fun WatchlistContent(
     viewModel: HomeViewModel,
     onQuoteClick: (Quote) -> Unit,
 ) {
-    val widgets by viewModel.widgets.collectAsState()
+    val widgets by viewModel.widgets.collectAsStateWithLifecycle()
     val fetchState by viewModel.fetchState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val totalHoldings by viewModel.totalGainLoss.collectAsStateWithLifecycle(initialValue = null)
     // The "next update" estimate was dropped from the home screen; each widget page now renders
     // this "last updated" line under its own summary.
     val lastUpdated = stringResource(R.string.last_fetch, fetchState.displayString)
     val watchlistWidgets = remember(widgets) { widgets.map { WidgetDataWatchlistWidget(it) } }
     WatchlistContent(
         appName = stringResource(R.string.app_name),
-        hasHoldings = viewModel.hasHoldings,
         isRefreshing = isRefreshing,
         widgets = watchlistWidgets,
-        totalGainLoss = totalHoldings,
-        totalHoldingsIcon = painterResource(R.drawable.ic_money),
         lastUpdated = lastUpdated,
         onRefresh = viewModel::refresh,
         onQuoteClick = onQuoteClick,
@@ -57,12 +51,6 @@ fun WatchlistContent(
                 onClick = { onClick() },
                 showMore = true,
                 onRemoveClick = onRemoveClick,
-            )
-        },
-        totalHoldingsPopup = { totals, onDismiss ->
-            TotalHoldingsPopup(
-                totalHoldings = totals,
-                onDismiss = onDismiss,
             )
         },
         modifier = modifier,

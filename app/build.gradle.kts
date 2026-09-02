@@ -63,7 +63,7 @@ android {
   val oldGitVersion = project.getOldGitVersionFromGit()
   println("get version name $name")
   println("Old git version $oldGitVersion")
-  val appIdBase = "com.github.premnirmal.tickerwidget"
+  val appIdBase = "liang.chicang.client.app"
 
   defaultConfig {
     applicationId = appIdBase

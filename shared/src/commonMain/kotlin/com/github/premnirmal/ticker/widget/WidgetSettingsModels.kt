@@ -20,7 +20,6 @@ interface WidgetSettings {
     fun setTextColorPref(value: Int)
     fun setBoldEnabled(value: Boolean)
     fun setHideHeader(value: Boolean)
-    fun setShowRefreshButton(value: Boolean)
 
     /** Shows/hides the portfolio's current market value (当前市值) in the widget summary row. */
     fun setShowMarketValue(value: Boolean)
@@ -46,7 +45,6 @@ data class WidgetPrefs(
     val textColourPref: Int,
     val boldText: Boolean,
     val hideWidgetHeader: Boolean,
-    val showRefreshButton: Boolean,
     val showMarketValue: Boolean,
     val showTodayGainLoss: Boolean,
     val showTotalGainLoss: Boolean,
@@ -69,8 +67,6 @@ class WidgetSettingsStrings(
     val boldChangeDesc: String,
     val hideHeader: String,
     val hideHeaderDesc: String,
-    val showRefresh: String,
-    val showRefreshDesc: String,
     val showMarketValue: String,
     val showMarketValueDesc: String,
     val showTodayGainLoss: String,

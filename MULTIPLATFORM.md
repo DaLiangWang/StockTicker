@@ -254,16 +254,15 @@ Migrated into `commonMain` so far:
   interfaces rather than the Android `StocksProvider`/`StocksStorage` concretes; `:app` binds those
   interfaces to the Android implementations in `appModule` (`single<IStocksProvider> { get<StocksProvider>() }`
   / `single<QuoteStorage> { get<StocksStorage>() }`).
-- The **per-ticker editor screens** — `NotesScreen`, `DisplaynameScreen` and `AlertsScreen`
+- The **per-ticker editor screens** — `NotesScreen` and `DisplaynameScreen`
   (`ticker.portfolio`, in `PortfolioEditScreens.kt`) — bound to those shared ViewModels. The
   Android-only inputs are hoisted as parameters: the localised strings as `String`s, the back/done
   icons as `Painter`s, the snackbar as a `SnackbarHostState`, and the `finish()`/`setResult()`
-  navigation side effects as `onBack`/`onDone` callbacks. The alerts editor's locale-aware
-  number parsing stays on the host via an `onSave` callback that returns the above/below error flags.
+  navigation side effects as `onBack`/`onDone` callbacks.
   The decimal-input helpers it relies on (`DecimalFormatter`/`DecimalInputVisualTransformation`) also
   moved into `commonMain`, with the locale separator behind an `expect`/`actual`
   `localeDecimalSeparator()` (Android `android.icu.text.DecimalFormatSymbols`, iOS
-  `NSNumberFormatter`). `NotesActivity`/`DisplaynameActivity`/`AlertsActivity` are now thin hosts that
+  `NSNumberFormatter`). `NotesActivity`/`DisplaynameActivity` are now thin hosts that
   supply the resources/callbacks and call the shared screen.
 - The **add-position / holdings editor** — its `AddPositionViewModel` (`ticker.portfolio`, now on the
   shared `IStocksProvider` like the other editor ViewModels) and the `AddPositionScreen`
@@ -622,9 +621,9 @@ plan and how each phase was delivered.
   `UIApplication.openURL`) and, for portfolio symbols, a **holdings summary** (shares / equity value /
   average price / gain-loss / day-change from the shared `Quote` helpers). Its **editors** are the
   same shared Compose Multiplatform screens the Android app uses, presented full-screen and persisted
-  through the shared view models: positions via `AddPositionScreen` + `AddPositionViewModel`, price
-  alerts via `AlertsScreen` + `AlertsViewModel`, notes via `NotesScreen` + `NotesViewModel`, and the
-  per-ticker display name via `DisplaynameScreen` + `DisplaynameViewModel` (the editors reuse the
+  through the shared view models: positions via `AddPositionScreen` + `AddPositionViewModel`, notes
+  via `NotesScreen` + `NotesViewModel`, and the per-ticker display name via `DisplaynameScreen` +
+  `DisplaynameViewModel` (the editors reuse the
   shared `ic_close`/`ic_done` Compose resources and the shared `DecimalFormatter` for input parsing).
   *Remaining:* none — the iOS portfolio share/import/export now drive native document pickers
   (`UIDocumentPickerViewController`/`UIActivityViewController`) via the shared

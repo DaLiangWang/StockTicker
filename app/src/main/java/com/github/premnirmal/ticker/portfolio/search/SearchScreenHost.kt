@@ -20,7 +20,7 @@ import org.koin.androidx.compose.koinViewModel
 
 /**
  * Android host for the shared [com.github.premnirmal.ticker.portfolio.search.SearchScreen]. Resolves
- * the Koin [SearchViewModel]/[NewsFeedViewModel], the localised labels, the `ic_close` clear icon,
+ * the Koin [SearchViewModel], the localised labels, the `ic_close` clear icon,
  * the Android `QuoteCard`/`SuggestionItem`/`AddSymbolDialog` slots, the `RuntimeShader`-based
  * [fadingEdges], the navigation [rememberScrollToTopAction] registration and the adaptive
  * Accompanist [TwoPane] layout, then delegates to the shared screen.

@@ -17,6 +17,7 @@ import com.github.premnirmal.ticker.NightMode
 import com.github.premnirmal.ticker.model.AlarmScheduler
 import com.github.premnirmal.ticker.model.StocksProvider
 import com.github.premnirmal.ticker.network.data.Quote
+import com.github.premnirmal.ticker.settings.PositionImportParser
 import com.github.premnirmal.ticker.ui.AppMessaging
 import com.github.premnirmal.ticker.widget.IWidgetData.LayoutType
 import com.github.premnirmal.tickerwidget.R
@@ -45,7 +46,6 @@ class WidgetData : IWidgetData, KoinComponent {
         private const val FONT_SIZE = AppPreferences.FONT_SIZE
         private const val BOLD_CHANGE = AppPreferences.BOLD_CHANGE
         private const val SHOW_CURRENCY = AppPreferences.SHOW_CURRENCY
-        private const val SHOW_REFRESH = AppPreferences.SHOW_REFRESH
         private const val SHOW_MARKET_VALUE = AppPreferences.SHOW_MARKET_VALUE
         private const val SHOW_TODAY_GAIN_LOSS = AppPreferences.SHOW_TODAY_GAIN_LOSS
         private const val SHOW_TOTAL_GAIN_LOSS = AppPreferences.SHOW_TOTAL_GAIN_LOSS
@@ -402,6 +402,32 @@ class WidgetData : IWidgetData, KoinComponent {
             stocksProvider.addStocks(filtered.filter { !stocksProvider.hasTicker(it) })
         }
         save()
+        // Surface the newly added tickers in this widget's in-memory quote list immediately, so the
+        // home screen shows them (as placeholders until fetched) without waiting for the background
+        // fetch triggered by addStocks — and even when that fetch returns nothing/fails.
+        refreshStocksList()
+    }
+
+    /**
+     * Imports positions (symbol, shares, cost price) from a pasted CSV [text] into this widget: the
+     * symbols are added to this widget's watchlist and the holdings (which back 当前市值 / 今日盈亏 /
+     * 累计盈亏) are created globally via [StocksProvider.setHolding]. Returns the number of rows that
+     * became real holdings, or `null` when nothing could be parsed.
+     */
+    suspend fun importPositions(text: String): Int? {
+        val entries = PositionImportParser.parse(text)
+        if (entries.isEmpty()) return null
+        addTickers(entries.map { it.symbol })
+        var imported = 0
+        for (entry in entries) {
+            val shares = entry.shares
+            val price = entry.price
+            if (entry.hasPosition && shares != null && price != null) {
+                stocksProvider.setHolding(entry.symbol, shares, price)
+                imported++
+            }
+        }
+        return imported
     }
 
     fun removeStock(ticker: String) {
@@ -414,17 +440,6 @@ class WidgetData : IWidgetData, KoinComponent {
 
     fun addAllFromStocksProvider() {
         addTickers(stocksProvider.tickers.value)
-    }
-
-    fun showRefreshButton(): Boolean = preferences.getBoolean(SHOW_REFRESH, false)
-
-    fun setShowRefreshButton(show: Boolean) {
-        preferences.edit {
-            putBoolean(SHOW_REFRESH, show)
-        }
-        _prefsFlow.value = toPrefs()
-        _data.value = toState()
-        emitWidgetChanges()
     }
 
     /** Whether the widget shows the portfolio's current market value (当前市值). */
@@ -481,7 +496,6 @@ class WidgetData : IWidgetData, KoinComponent {
             positiveTextColor = positiveTextColor,
             negativeTextColor = negativeTextColor,
             textColor = textColorRes(),
-            showRefreshButton = showRefreshButton(),
             showMarketValue = readShowMarketValue(),
             showTodayGainLoss = readShowTodayGainLoss(),
             showTotalGainLoss = readShowTotalGainLoss(),
@@ -505,7 +519,6 @@ class WidgetData : IWidgetData, KoinComponent {
             positiveTextColor = positiveTextColor,
             negativeTextColor = negativeTextColor,
             textColor = textColorRes(),
-            showRefreshButton = showRefreshButton(),
             showMarketValue = readShowMarketValue(),
             showTodayGainLoss = readShowTodayGainLoss(),
             showTotalGainLoss = readShowTotalGainLoss(),
@@ -618,7 +631,6 @@ class WidgetData : IWidgetData, KoinComponent {
         @param:ColorRes
         @get:ColorRes
         val textColor: Int,
-        val showRefreshButton: Boolean,
         val showMarketValue: Boolean = true,
         val showTodayGainLoss: Boolean = true,
         val showTotalGainLoss: Boolean = true,
@@ -652,7 +664,6 @@ class WidgetData : IWidgetData, KoinComponent {
         @param:ColorRes
         @get:ColorRes
         val textColor: Int,
-        val showRefreshButton: Boolean,
         val showMarketValue: Boolean = true,
         val showTodayGainLoss: Boolean = true,
         val showTotalGainLoss: Boolean = true,

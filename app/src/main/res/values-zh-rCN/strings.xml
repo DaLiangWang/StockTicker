@@ -41,8 +41,7 @@
   <string name="notification_alerts">通知提醒</string>
   <string name="notification_alerts_desc">接收通知提醒</string>
   <string name="notification_alerts_required_message">应用需要通知权限才能接收提醒通知。</string>
-  <string name="show_refresh">显示刷新图标</string>
-  <string name="show_refresh_desc">在组件中显示刷新图标（受 Android 系统省电策略影响，可能不准时）</string>
+
   <string name="auto_sort">自动排序</string>
   <string name="auto_sort_desc">股票将按涨跌幅排序。</string>
   <string name="hide_header">隐藏组件标题栏</string>

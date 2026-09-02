@@ -110,13 +110,16 @@ class HomeViewModel constructor(
 
     fun refresh() {
         viewModelScope.launch {
-            if (widgets.value.isEmpty()) {
-                widgetDataProvider.refreshWidgetDataList()
-            }
             _isRefreshing.value = true
-            stocksProvider.fetch()
-        }.invokeOnCompletion {
-            _isRefreshing.value = false
+            try {
+                stocksProvider.fetch()
+                // Re-sync each widget's in-memory quote list from StocksProvider after the fetch so
+                // that newly added symbols (e.g. an import) and freshly fetched quotes reach the home
+                // screen even when the fetch produced no broadcast (empty/failed response).
+                widgetDataProvider.refreshWidgetDataList()
+            } finally {
+                _isRefreshing.value = false
+            }
         }
     }
 

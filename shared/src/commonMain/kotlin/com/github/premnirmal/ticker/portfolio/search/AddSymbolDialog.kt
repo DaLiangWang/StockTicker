@@ -90,7 +90,7 @@ fun AddSymbolDialogContent(
                     )
                 }
             }
-            items(suggestionState.widgetDataList.size) { i ->
+            items(suggestionState.widgetDataList.size, key = { suggestionState.widgetDataList[it].widgetId }) { i ->
                 val widgetData = suggestionState.widgetDataList[i]
                 val exists = remember(widgetData) { widgetData.exists }
                 Row(

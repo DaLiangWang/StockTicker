@@ -233,7 +233,7 @@ data class Quote constructor(
                 "CDF" to "FrCD",
                 "CHF" to "CHF",
                 "CLP" to "$",
-                "CNY" to "CN¥",
+                "CNY" to "¥",
                 "COP" to "$",
                 "CRC" to "₡",
                 "CVE" to "CV$",

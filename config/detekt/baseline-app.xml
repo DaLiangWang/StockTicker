@@ -2,7 +2,10 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
+    <ID>NoUnusedImports:GlanceStocksWidget.kt$com.github.premnirmal.ticker.widget.GlanceStocksWidget.kt</ID>
+    <ID>NoUnusedImports:WidgetPreview.kt$com.github.premnirmal.ticker.widget.WidgetPreview.kt</ID>
     <ID>UnusedParameter:SearchScreenHost.kt$displayFeatures: List&lt;DisplayFeature&gt;</ID>
     <ID>UnusedParameter:SearchScreenHost.kt$widthSizeClass: WindowWidthSizeClass</ID>
+    <ID>UnusedParameter:WidgetPreview.kt$onRefreshClick: () -&gt; Unit</ID>
   </CurrentIssues>
 </SmellBaseline>

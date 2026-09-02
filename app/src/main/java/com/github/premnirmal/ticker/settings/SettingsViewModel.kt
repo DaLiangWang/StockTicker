@@ -1,13 +1,10 @@
 package com.github.premnirmal.ticker.settings
 
 import android.appwidget.AppWidgetManager
-import android.content.Context
-import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.model.StocksProvider
-import com.github.premnirmal.ticker.showDialog
 import com.github.premnirmal.ticker.widget.WidgetData
 import com.github.premnirmal.ticker.widget.WidgetDataProvider
 import com.github.premnirmal.tickerwidget.R
@@ -110,45 +107,6 @@ class SettingsViewModel constructor(
             _settings.emit(buildData(widgetDataProvider.dataForWidgetId(AppWidgetManager.INVALID_APPWIDGET_ID)))
             broadcastUpdateWidget()
         }
-    }
-
-    /**
-     * Imports positions (symbol, shares, cost price) from [fileUri] and reports the outcome as a
-     * localised message, creating real holdings — which is what the 今日盈亏 / 累计盈亏 / 当前市值
-     * figures are computed from.
-     */
-    fun importPositions(context: Context, fileUri: Uri) {
-        viewModelScope.launch {
-            val count = PositionsImportTask(stocksProvider).import(context, fileUri)
-            val message = when {
-                count == null -> context.getString(R.string.positions_import_fail)
-                count == 0 -> context.getString(R.string.positions_import_empty)
-                else -> context.getString(R.string.positions_import_success, count)
-            }
-            context.showDialog(message)
-        }
-    }
-
-    /**
-     * Imports positions from a raw CSV [text] the user pasted into the import dialog. Parses both the
-     * extended `symbol,market,name,quantity,cost_price[,currency,note]` format and the legacy
-     * `symbol,shares,cost` form via [PositionImportParser]. Returns the number of rows that became real
-     * holdings, or `null` when nothing could be parsed. The host surfaces the outcome.
-     */
-    suspend fun importPositionsFromText(text: String): Int? {
-        val entries = PositionImportParser.parse(text)
-        if (entries.isEmpty()) return null
-        stocksProvider.addStocks(entries.map { it.symbol })
-        var imported = 0
-        for (entry in entries) {
-            val shares = entry.shares
-            val price = entry.price
-            if (entry.hasPosition && shares != null && price != null) {
-                stocksProvider.setHolding(entry.symbol, shares, price)
-                imported++
-            }
-        }
-        return imported
     }
 
     /**

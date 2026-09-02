@@ -26,7 +26,6 @@ import com.github.premnirmal.ticker.news.QuoteDetailViewModel
 import com.github.premnirmal.ticker.portfolio.DisplaynameActivity
 import com.github.premnirmal.ticker.portfolio.HoldingsActivity
 import com.github.premnirmal.ticker.portfolio.NotesActivity
-import com.github.premnirmal.ticker.portfolio.search.AddSymbolDialog
 import com.github.premnirmal.ticker.ui.ContentType.SINGLE_PANE
 import com.github.premnirmal.ticker.ui.LocalAppMessaging
 import com.github.premnirmal.ticker.ui.fadingEdges
@@ -46,8 +45,8 @@ import org.koin.androidx.compose.koinViewModel
  * Android host for the shared [com.github.premnirmal.ticker.detail.QuoteDetailScreen]. Resolves the
  * Koin [QuoteDetailViewModel]/[AppPreferences], collects the ViewModel state, derives the localised
  * [QuoteDetailItem] rows (`buildQuoteDetails`), the change/up/down [ColourPalette] colours, the
- * localised [QuoteDetailStrings], the `ic_refresh`/`ic_add_to_list`/`ic_edit` icons, the
- * `AppCard`/`NewsCard`/`AddSymbolDialog`/`LinkText` slots, the platform chart formatters, the
+ * localised [QuoteDetailStrings], the `ic_refresh`/`ic_edit` icons, the
+ * `AppCard`/`NewsCard`/`LinkText` slots, the platform chart formatters, the
  * `RuntimeShader`-based [fadingEdges], the [AppMessaging] snackbar host, the per-section
  * `Holdings`/`Alerts`/`Notes`/`Displayname` activity-result launchers and the adaptive Accompanist
  * [TwoPane] layout, owns the `loadQuote`/`fetchAll`/`fetchQuoteInRealTime`/`reset` lifecycle and the
@@ -77,7 +76,6 @@ fun QuoteDetailScreen(
             ?: emptyList()
     }
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
-    val showAddRemoveTooltip by viewModel.showAddRemoveTooltip.collectAsStateWithLifecycle(true)
     val chartData by viewModel.data.collectAsStateWithLifecycle()
     val range by viewModel.range.collectAsStateWithLifecycle()
     val graphError by viewModel.dataFetchError.collectAsStateWithLifecycle()
@@ -117,7 +115,6 @@ fun QuoteDetailScreen(
     }
 
     val strings = QuoteDetailStrings(
-        addToPortfolio = stringResource(R.string.add_to_portfolio),
         graphFetchFailed = stringResource(R.string.graph_fetch_failed),
         rangeOneDay = stringResource(R.string.one_day_short),
         rangeTwoWeeks = stringResource(R.string.two_weeks_short),
@@ -155,7 +152,6 @@ fun QuoteDetailScreen(
         details = details,
         isInPortfolio = isInPortfolio,
         isRefreshing = isRefreshing,
-        showAddRemoveTooltip = showAddRemoveTooltip,
         range = range,
         graphError = graphError != null,
         position = holdings,
@@ -163,7 +159,6 @@ fun QuoteDetailScreen(
         displayname = displayname,
         strings = strings,
         refreshIcon = painterResource(R.drawable.ic_refresh),
-        addIcon = painterResource(R.drawable.ic_add_to_list),
         editIcon = painterResource(R.drawable.ic_edit),
         snackbarHostState = appMessaging.snackbarHostState,
         onRefresh = {
@@ -171,7 +166,6 @@ fun QuoteDetailScreen(
                 viewModel.fetchAll(currentQuote)
             }
         },
-        onAddRemoveTooltipShown = { viewModel.addRemoveTooltipShown() },
         onCardClick = { title, data -> appMessaging.sendBottomSheet(title, data) },
         onEditPositions = {
             holdingsLauncher.launch(
@@ -199,9 +193,6 @@ fun QuoteDetailScreen(
             AppCard(modifier = cardModifier, onClick = onClick, content = content)
         },
         modifier = modifier,
-        addSymbolDialog = { symbol, onDismissRequest ->
-            AddSymbolDialog(symbol = symbol, onDismissRequest = onDismissRequest)
-        },
         listFadingEdges = { state -> Modifier.fadingEdges(state) },
         twoPane = if (resolvedContentType == SINGLE_PANE) {
             null

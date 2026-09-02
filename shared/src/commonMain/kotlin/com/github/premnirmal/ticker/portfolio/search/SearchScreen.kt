@@ -14,9 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,7 +35,6 @@ import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.KeyboardCapitalization
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.github.premnirmal.ticker.model.FetchResult
 import com.github.premnirmal.ticker.navigation.LocalContentBottomPadding
@@ -118,9 +114,8 @@ fun SearchScreen(
             }
         }
     ) { padding ->
-        val searchAndTrending: @Composable (Dp) -> Unit = { minSize ->
+        val searchAndTrending: @Composable () -> Unit = {
             SearchAndTrending(
-                columns = StaggeredGridCells.Adaptive(minSize = minSize),
                 trendingStocks = trendingStocks,
                 onQuoteClick = onQuoteClick,
                 searchResults = searchResults,
@@ -157,10 +152,10 @@ fun SearchScreen(
             onRefresh = onRefresh,
         ) {
             if (twoPane == null) {
-                searchAndTrending(120.dp)
+                searchAndTrending()
             } else {
                 twoPane {
-                    searchAndTrending(150.dp)
+                    searchAndTrending()
                 }
             }
         }
@@ -174,7 +169,6 @@ fun SearchScreen(
 
 @Composable
 private fun SearchAndTrending(
-    columns: StaggeredGridCells,
     trendingStocks: List<Quote>,
     onQuoteClick: (Quote) -> Unit,
     searchResults: FetchResult<List<Suggestion>>?,
@@ -201,7 +195,6 @@ private fun SearchAndTrending(
         )
     } else {
         TrendingStocks(
-            columns = columns,
             trendingStocks = trendingStocks,
             onQuoteClick = onQuoteClick,
             quoteCard = quoteCard,
@@ -309,7 +302,6 @@ private fun SearchResults(
 
 @Composable
 private fun TrendingStocks(
-    columns: StaggeredGridCells,
     trendingStocks: List<Quote>,
     onQuoteClick: (Quote) -> Unit,
     quoteCard: @Composable (quote: Quote, onClick: (Quote) -> Unit) -> Unit,
@@ -317,24 +309,20 @@ private fun TrendingStocks(
     listFadingEdges: (ScrollableState) -> Modifier,
     registerScrollToTop: @Composable (scrollToTop: suspend () -> Unit) -> Unit,
 ) {
-    val gridState = rememberLazyStaggeredGridState()
+    val gridState = rememberLazyListState()
     if (selectedWidgetId == null) {
         registerScrollToTop {
             gridState.animateScrollToItem(0)
         }
     }
-    LazyVerticalStaggeredGrid(
+    LazyColumn(
         modifier = Modifier
             .fillMaxHeight()
-            .padding(
-                horizontal = 8.dp
-            )
+            .padding(horizontal = 8.dp)
             .background(color = MaterialTheme.colorScheme.surface)
             .then(listFadingEdges(gridState)),
-        columns = columns,
         contentPadding = PaddingValues(bottom = LocalContentBottomPadding.current),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalItemSpacing = 8.dp,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
         state = gridState,
     ) {
         items(

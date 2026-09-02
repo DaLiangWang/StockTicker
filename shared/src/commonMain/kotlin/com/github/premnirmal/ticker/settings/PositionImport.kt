@@ -31,7 +31,8 @@ data class PositionImportEntry(
  * Pure, platform-agnostic parsing of the positions CSV import format.
  *
  * No platform IO and no Android/iOS dependencies, so a file produced on one platform imports on the
- * other. The Android file IO lives in [PositionsImportTask].
+ * other. The parsed rows are consumed by the Android widget import (WidgetData.importPositions), which
+ * adds the symbols to the widget's watchlist and creates the holdings.
  */
 object PositionImportParser {
 

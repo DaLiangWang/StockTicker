@@ -39,8 +39,7 @@
   <string name="notification_alerts">通知アラート</string>
   <string name="notification_alerts_desc">通知アラートを受け取る</string>
   <string name="notification_alerts_required_message">通知アラートを受け取るには、通知の許可が必要です。</string>
-  <string name="show_refresh">更新アイコンを表示</string>
-  <string name="show_refresh_desc">ウィジェットに更新アイコンを表示します（Androidのバッテリー節約機能の影響で動作が不安定な場合があります）</string>
+
   <string name="auto_sort">自動並び替え</string>
   <string name="auto_sort_desc">変動率の順に銘柄を並び替えます。</string>
   <string name="hide_header">ウィジェットヘッダーを非表示</string>

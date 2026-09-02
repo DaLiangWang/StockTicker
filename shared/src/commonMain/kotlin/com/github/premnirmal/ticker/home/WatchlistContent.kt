@@ -114,11 +114,8 @@ import sh.calvin.reorderable.rememberReorderableLazyStaggeredGridState
 @Composable
 fun WatchlistContent(
     appName: String,
-    hasHoldings: Boolean,
     isRefreshing: Boolean,
     widgets: List<WatchlistWidget>,
-    totalGainLoss: TotalGainLoss?,
-    totalHoldingsIcon: Painter,
     lastUpdated: String,
     onRefresh: () -> Unit,
     onQuoteClick: (Quote) -> Unit,
@@ -128,24 +125,32 @@ fun WatchlistContent(
         onClick: () -> Unit,
         onRemoveClick: (Quote) -> Unit,
     ) -> Unit,
-    totalHoldingsPopup: @Composable (totalHoldings: TotalGainLoss, onDismiss: () -> Unit) -> Unit,
     modifier: Modifier = Modifier,
     listFadingEdges: (ScrollableState) -> Modifier = { Modifier },
     registerWidgetScroll: @Composable (index: Int, scroll: suspend () -> Unit) -> Unit = { _, _ -> },
 ) {
-    var showTotalHoldingsPopup by remember {
-        mutableStateOf(false)
-    }
+    val scope = rememberCoroutineScope()
+    val rowState = rememberLazyListState()
     Column(modifier = modifier.fillMaxSize()) {
         TopAppBar(
             appName = appName,
-            hasHoldings = hasHoldings,
-            totalHoldingsIcon = totalHoldingsIcon,
-            onTotalHoldingsClick = { showTotalHoldingsPopup = true },
         )
+        if (widgets.isNotEmpty()) {
+            ScrollableTabRow(
+                selectedTabIndex = rowState.firstVisibleItemIndex.coerceIn(0, widgets.lastIndex),
+                edgePadding = 0.dp,
+            ) {
+                widgets.forEachIndexed { index, widget ->
+                    Tab(
+                        selected = rowState.firstVisibleItemIndex == index,
+                        onClick = { scope.launch { rowState.scrollToItem(index) } },
+                        text = { Text(widget.name) },
+                    )
+                }
+            }
+        }
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
             val constraints = this.constraints
-            val rowState = rememberLazyListState()
             val hapticFeedback = LocalHapticFeedback.current
             val windowInfo = LocalWindowInfo.current
             val density = LocalDensity.current
@@ -179,11 +184,6 @@ fun WatchlistContent(
             )
         }
     }
-    if (showTotalHoldingsPopup && totalGainLoss != null) {
-        totalHoldingsPopup(totalGainLoss) {
-            showTotalHoldingsPopup = false
-        }
-    }
 }
 
 @Composable
@@ -191,26 +191,11 @@ fun WatchlistContent(
 private fun TopAppBar(
     modifier: Modifier = Modifier,
     appName: String,
-    hasHoldings: Boolean,
-    totalHoldingsIcon: Painter,
-    onTotalHoldingsClick: () -> Unit,
 ) {
     com.github.premnirmal.ticker.ui.TopBar(
         modifier = modifier,
         text = appName,
         colors = TopAppBarDefaults.topAppBarColors(),
-        actions = {
-            if (hasHoldings) {
-                IconButton(
-                    onClick = onTotalHoldingsClick,
-                ) {
-                    Icon(
-                        painter = totalHoldingsIcon,
-                        contentDescription = null,
-                    )
-                }
-            }
-        }
     )
 }
 

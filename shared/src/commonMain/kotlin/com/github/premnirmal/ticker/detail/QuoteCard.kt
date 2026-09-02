@@ -48,7 +48,7 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val QUOTE_MAX_LINES = 1
 
-private val DASH = "—"
+private const val DASH = "—"
 
 private val TABLE_ROW_PADDING_H = 12.dp
 private val NAME_MIN_WIDTH = 160.dp
@@ -169,9 +169,9 @@ fun QuoteTableRow(
 }
 
 /**
- * Shared (Compose Multiplatform) quote card rendered identically on Android and iOS. It renders a
- * single row with the columns 股票名 / 当日盈利 / 涨跌幅 / 总盈利 / 市值 / 成本价, each labelled above its
- * value, so it works standalone in the search/trending grid where there is no table header.
+ * Shared (Compose Multiplatform) quote row rendered identically on Android and iOS. Laid out as a
+ * table row with four columns — 股票代码 / 名称 / 当前价格 / 今日涨跌 — so it lines up with the
+ * suggestion rows in the search/trending list.
  *
  * The watchlist uses [QuoteTableRow] instead, which lays the same figures out as two stacked blocks
  * and scrolls horizontally in sync with every other row.
@@ -194,51 +194,36 @@ fun QuoteCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .padding(horizontal = 10.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            NameColumn(
-                modifier = Modifier.weight(1.6f),
-                quote = quote,
+            QuoteSymbolText(
+                modifier = Modifier.weight(1.1f),
+                text = quote.symbol,
+            )
+            QuoteNameText(
+                modifier = Modifier
+                    .weight(2f)
+                    .padding(start = 8.dp),
+                text = quote.name,
                 maxLines = quoteNameMaxLines,
             )
             val up = quote.isUp
             val down = quote.isDown
-            TableCell(
+            Text(
                 modifier = Modifier.weight(1f),
-                label = stringResource(Res.string.today_profit),
-                value = quote.changeStringWithSign(),
+                text = quote.priceFormat.format(quote.lastTradePrice),
+                style = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                textAlign = TextAlign.End,
+            )
+            Text(
+                modifier = Modifier.weight(1f),
+                text = quote.changePercentStringWithSign(),
+                style = MaterialTheme.typography.bodyMedium,
                 color = SharedColours.changeColour(up, down),
-            )
-            TableCell(
-                modifier = Modifier.weight(1f),
-                label = stringResource(Res.string.change_percent),
-                value = quote.changePercentStringWithSign(),
-                color = SharedColours.changeColour(up, down),
-            )
-            val gain = quote.gainLoss()
-            TableCell(
-                modifier = Modifier.weight(1f),
-                label = stringResource(Res.string.total_profit),
-                value = quote.gainLossString(),
-                color = SharedColours.changeColour(gain > 0, gain < 0),
-            )
-            val holdings = quote.holdings()
-            TableCell(
-                modifier = Modifier.weight(1f),
-                label = stringResource(Res.string.market_cap),
-                value = if (quote.hasPositions()) quote.holdingsString() else DASH,
-                color = if (quote.hasPositions()) {
-                    SharedColours.changeColour(holdings > 0, holdings < 0)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-            )
-            TableCell(
-                modifier = Modifier.weight(1f),
-                label = stringResource(Res.string.cost_price),
-                value = quote.position?.let { quote.priceFormat.format(it.averagePrice()) } ?: DASH,
-                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                textAlign = TextAlign.End,
             )
             if (showMore) {
                 MoreIcon(
@@ -250,50 +235,7 @@ fun QuoteCard(
     }
 }
 
-@Composable
-private fun NameColumn(
-    modifier: Modifier = Modifier,
-    quote: Quote,
-    maxLines: Int,
-) {
-    Column(modifier = modifier) {
-        QuoteSymbolText(text = quote.symbol)
-        QuoteNameText(
-            modifier = Modifier.padding(top = 2.dp),
-            text = quote.name,
-            maxLines = maxLines,
-        )
-    }
-}
 
-@Composable
-private fun TableCell(
-    modifier: Modifier = Modifier,
-    label: String,
-    value: String,
-    color: Color,
-) {
-    Column(
-        modifier = modifier,
-        horizontalAlignment = Alignment.End,
-    ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-        )
-        Spacer(Modifier.height(2.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.bodySmall,
-            color = color,
-            maxLines = 1,
-            textAlign = TextAlign.End,
-            overflow = TextOverflow.Ellipsis,
-        )
-    }
-}
 
 @Composable
 fun QuoteSymbolText(

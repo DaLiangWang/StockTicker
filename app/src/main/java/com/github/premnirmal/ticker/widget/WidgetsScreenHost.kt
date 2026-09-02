@@ -1,16 +1,26 @@
 package com.github.premnirmal.ticker.widget
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.widget.Toast
 import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -23,12 +33,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringArrayResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.layout.DisplayFeature
 import com.github.premnirmal.ticker.model.FetchState
 import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.calculateContentAndNavigationType
 import com.github.premnirmal.ticker.navigation.rememberScrollToTopAction
 import com.github.premnirmal.ticker.portfolio.search.SearchActivity
+import com.github.premnirmal.ticker.showDialog
 import com.github.premnirmal.ticker.ui.ContentType.SINGLE_PANE
 import com.github.premnirmal.ticker.ui.fadingEdges
 import com.github.premnirmal.tickerwidget.R
@@ -41,6 +53,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -64,8 +77,10 @@ fun WidgetsScreen(
     val viewModel = koinViewModel<WidgetsViewModel>()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val widgetDataList by viewModel.widgetDataList.collectAsState(emptyList())
-    val fetchState by viewModel.fetchState.collectAsState()
+    var showImportDialog by remember { mutableStateOf(false) }
+    var csvText by remember { mutableStateOf("") }
+    val widgetDataList by viewModel.widgetDataList.collectAsStateWithLifecycle(emptyList())
+    val fetchState by viewModel.fetchState.collectAsStateWithLifecycle()
 
     var widgetDataSelectedIndex by rememberSaveable { mutableIntStateOf(0) }
     val widgetData = remember(widgetDataSelectedIndex, selectedWidgetId, widgetDataList) {
@@ -107,8 +122,6 @@ fun WidgetsScreen(
             hideHeader = stringResource(id = R.string.hide_header),
             hideHeaderDesc = stringResource(id = R.string.hide_header_desc),
 
-            showRefresh = stringResource(id = R.string.show_refresh),
-            showRefreshDesc = stringResource(id = R.string.show_refresh_desc),
             showMarketValue = stringResource(id = R.string.widget_show_market_value),
             showMarketValueDesc = stringResource(id = R.string.widget_show_market_value_desc),
             showTodayGainLoss = stringResource(id = R.string.widget_show_today_gain_loss),
@@ -124,6 +137,8 @@ fun WidgetsScreen(
                 context.startActivity(SearchActivity.launchIntent(context, id))
             }
         },
+        onImportPositions = { showImportDialog = true },
+        importPositionsLabel = stringResource(id = R.string.action_import_positions),
         widgetPreview = {
             widgetData?.let {
                 WidgetPreview(
@@ -159,6 +174,71 @@ fun WidgetsScreen(
         },
         topAppBarActions = topAppBarActions,
     )
+
+    if (showImportDialog) {
+        AlertDialog(
+            onDismissRequest = { showImportDialog = false },
+            title = { Text(text = stringResource(id = R.string.action_import_positions)) },
+            text = {
+                Column {
+                    OutlinedTextField(
+                        value = csvText,
+                        onValueChange = { csvText = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(text = stringResource(id = R.string.import_positions_desc)) },
+                        singleLine = false,
+                        minLines = 6,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(
+                        onClick = {
+                            val clipboard =
+                                context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                            clipboard.setPrimaryClip(
+                                ClipData.newPlainText(
+                                    "positions template",
+                                    context.getString(R.string.positions_csv_template),
+                                ),
+                            )
+                            Toast.makeText(
+                                context,
+                                R.string.positions_template_copied,
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                        }
+                    ) {
+                        Text(text = stringResource(id = R.string.action_copy_template))
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            val widget = widgetData
+                            if (widget == null) {
+                                showImportDialog = false
+                                return@launch
+                            }
+                            val count = widget.importPositions(csvText)
+                            showImportDialog = false
+                            val message = when {
+                                count == null -> context.getString(R.string.positions_import_fail)
+                                count == 0 -> context.getString(R.string.positions_import_empty)
+                                else -> context.getString(R.string.positions_import_success, count)
+                            }
+                            context.showDialog(message)
+                        }
+                    }
+                ) { Text(text = stringResource(id = R.string.action_import)) }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportDialog = false }) {
+                    Text(text = stringResource(id = R.string.cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -173,7 +253,7 @@ private fun WidgetPreview(
             .paint(painterResource(R.drawable.bg_header_light), contentScale = ContentScale.FillBounds)
             .padding(24.dp),
     ) {
-        val quotes by widgetData.stocks.collectAsState()
+        val quotes by widgetData.stocks.collectAsStateWithLifecycle()
         val data = remember(state) { SerializableWidgetState.from(state, fetchState, false) }
         GlanceWidgetPreview(
             modifier = Modifier.fillMaxWidth().height(220.dp),
@@ -205,7 +285,6 @@ private class WidgetDataSettings(
     override fun setTextColorPref(value: Int) = widgetData.setTextColorPref(value)
     override fun setBoldEnabled(value: Boolean) = widgetData.setBoldEnabled(value)
     override fun setHideHeader(value: Boolean) = widgetData.setHideHeader(value)
-    override fun setShowRefreshButton(value: Boolean) = widgetData.setShowRefreshButton(value)
     override fun setShowMarketValue(value: Boolean) = widgetData.setShowMarketValue(value)
     override fun setShowTodayGainLoss(value: Boolean) = widgetData.setShowTodayGainLoss(value)
     override fun setShowTotalGainLoss(value: Boolean) = widgetData.setShowTotalGainLoss(value)
@@ -220,7 +299,6 @@ private fun WidgetData.Prefs.toWidgetPrefs() = WidgetPrefs(
     textColourPref = textColourPref,
     boldText = boldText,
     hideWidgetHeader = hideWidgetHeader,
-    showRefreshButton = showRefreshButton,
     showMarketValue = showMarketValue,
     showTodayGainLoss = showTodayGainLoss,
     showTotalGainLoss = showTotalGainLoss,

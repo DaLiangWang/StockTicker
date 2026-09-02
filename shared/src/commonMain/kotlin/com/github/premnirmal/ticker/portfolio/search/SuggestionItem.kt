@@ -15,12 +15,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.github.premnirmal.shared.resources.Res
 import com.github.premnirmal.shared.resources.ic_add_to_list
 import com.github.premnirmal.ticker.network.data.Suggestion
 import com.github.premnirmal.tickerwidget.ui.Divider
 import org.jetbrains.compose.resources.painterResource
+
+private const val DASH = "—"
 
 /**
  * Shared (Compose Multiplatform) search-suggestion row rendered identically on Android and iOS: the
@@ -39,19 +43,41 @@ fun SuggestionItem(
     addRemoveContentDescription: String? = null,
     addRemoveIconTint: Color = LocalContentColor.current,
 ) {
-    Column(
-        modifier = modifier
-    ) {
+    Column(modifier = modifier) {
         Row(
-            modifier = Modifier.padding(start = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onSuggestionClick(suggestion) }
+                .padding(horizontal = 10.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
+                modifier = Modifier.weight(1.1f),
+                text = suggestion.symbol,
+                style = MaterialTheme.typography.titleSmall,
+            )
+            Text(
                 modifier = Modifier
-                    .weight(1f)
-                    .clickable { onSuggestionClick(suggestion) },
-                text = suggestion.displayString(),
-                style = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
+                    .weight(2f)
+                    .padding(start = 8.dp),
+                text = suggestion.name.ifEmpty { suggestion.symbol },
+                style = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(
+                modifier = Modifier.weight(1f),
+                text = DASH,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.End,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                modifier = Modifier.weight(1f),
+                text = DASH,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.End,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             IconButton(
                 onClick = {

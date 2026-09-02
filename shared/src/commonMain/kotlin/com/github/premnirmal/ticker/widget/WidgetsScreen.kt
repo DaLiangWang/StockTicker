@@ -75,6 +75,8 @@ fun WidgetsScreen(
     doneIcon: Painter,
     showAddStocks: Boolean,
     onAddStocks: () -> Unit,
+    onImportPositions: () -> Unit = {},
+    importPositionsLabel: String = "",
     widgetPreview: @Composable () -> Unit,
     modifier: Modifier = Modifier,
     twoPane: (@Composable (
@@ -128,10 +130,10 @@ fun WidgetsScreen(
                         )
                     }
                 }
-                item {
-                    widgetPreview()
-                }
-                widgetSettings(settings, prefs, strings, doneIcon, showAddStocks, onAddStocks, divider)
+                widgetSettings(
+                    settings, prefs, strings, doneIcon, showAddStocks, onAddStocks,
+                    onImportPositions, importPositionsLabel, divider,
+                )
             }
         } else {
             twoPane(
@@ -154,7 +156,10 @@ fun WidgetsScreen(
                                 )
                             }
                         }
-                        widgetSettings(settings, prefs, strings, doneIcon, showAddStocks, onAddStocks, divider)
+                        widgetSettings(
+                            settings, prefs, strings, doneIcon, showAddStocks, onAddStocks,
+                            onImportPositions, importPositionsLabel, divider,
+                        )
                     }
                 },
                 {
@@ -174,6 +179,8 @@ private fun LazyListScope.widgetSettings(
     doneIcon: Painter,
     showAddStocks: Boolean,
     onAddStocks: () -> Unit,
+    onImportPositions: () -> Unit,
+    importPositionsLabel: String,
     divider: @Composable () -> Unit,
 ) {
     item {
@@ -188,6 +195,17 @@ private fun LazyListScope.widgetSettings(
                     .clickable { onAddStocks() },
                 title = strings.addStock,
                 subtitle = strings.trendingStocks,
+            )
+            divider()
+        }
+    }
+    if (importPositionsLabel.isNotEmpty()) {
+        item {
+            SettingsText(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onImportPositions() },
+                title = importPositionsLabel,
             )
             divider()
         }
@@ -225,15 +243,6 @@ private fun LazyListScope.widgetSettings(
             subtitle = strings.hideHeaderDesc,
             checked = prefs.hideWidgetHeader,
             onCheckChanged = settings::setHideHeader
-        )
-        divider()
-    }
-    item {
-        CheckboxPreference(
-            title = strings.showRefresh,
-            subtitle = strings.showRefreshDesc,
-            checked = prefs.showRefreshButton,
-            onCheckChanged = settings::setShowRefreshButton
         )
         divider()
     }

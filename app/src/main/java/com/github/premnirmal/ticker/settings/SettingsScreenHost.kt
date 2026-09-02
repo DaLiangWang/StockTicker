@@ -8,19 +8,14 @@ import androidx.compose.foundation.gestures.ScrollableState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,13 +29,11 @@ import com.github.premnirmal.ticker.CustomTabs
 import com.github.premnirmal.ticker.home.HomeViewModel
 import com.github.premnirmal.ticker.navigation.HomeRoute
 import com.github.premnirmal.ticker.navigation.rememberScrollToTopAction
-import com.github.premnirmal.ticker.showDialog
 import com.github.premnirmal.ticker.ui.fadingEdges
 import com.github.premnirmal.tickerwidget.R
 import com.github.premnirmal.tickerwidget.ui.Divider
 import com.github.premnirmal.tickerwidget.ui.theme.alegreyaFontFamily
 import com.github.premnirmal.tickerwidget.ui.theme.boldFontFamily
-import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 
 /**
@@ -60,10 +53,6 @@ fun SettingsScreen(
     val context = LocalContext.current
 
     val primaryColor = MaterialTheme.colorScheme.primary
-
-    var showImportDialog by remember { mutableStateOf(false) }
-    var csvText by remember { mutableStateOf("") }
-    val scope = rememberCoroutineScope()
 
     SettingsScreen(
         settingsData = settingsData,
@@ -102,44 +91,6 @@ fun SettingsScreen(
             rememberScrollToTopAction(HomeRoute.Settings, scrollToTop = scrollToTop)
         },
     )
-
-    if (showImportDialog) {
-        AlertDialog(
-            onDismissRequest = { showImportDialog = false },
-            title = { Text(text = stringResource(id = R.string.action_import_positions)) },
-            text = {
-                OutlinedTextField(
-                    value = csvText,
-                    onValueChange = { csvText = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = stringResource(id = R.string.import_positions_desc)) },
-                    singleLine = false,
-                    minLines = 6,
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        scope.launch {
-                            val count = viewModel.importPositionsFromText(csvText)
-                            showImportDialog = false
-                            val message = when {
-                                count == null -> context.getString(R.string.positions_import_fail)
-                                count == 0 -> context.getString(R.string.positions_import_empty)
-                                else -> context.getString(R.string.positions_import_success, count)
-                            }
-                            context.showDialog(message)
-                        }
-                    }
-                ) { Text(text = stringResource(id = R.string.action_import)) }
-            },
-            dismissButton = {
-                TextButton(onClick = { showImportDialog = false }) {
-                    Text(text = stringResource(id = R.string.cancel))
-                }
-            },
-        )
-    }
 }
 
 @Composable

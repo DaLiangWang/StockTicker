@@ -1,6 +1,5 @@
 package com.github.premnirmal.ticker.widget
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -8,15 +7,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,9 +22,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -109,7 +103,7 @@ private fun Header(
             modifier = Modifier
                 .weight(1f)
                 .padding(horizontal = 2.dp),
-            text = lastUpdatedText,
+            text = widgetData.name,
             style = TextStyle(
                 color = colorResource(R.color.text_widget_header),
                 fontSize = TextUnit(fontSize, TextUnitType.Sp),
@@ -117,29 +111,18 @@ private fun Header(
                 fontWeight = FontWeight.Normal,
             ),
         )
-
-        if (widgetData.showRefreshButton) {
-            Box(
-                modifier = Modifier
-                    .wrapContentSize()
-                    .clickable(onClick = onRefreshClick),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (widgetData.isRefreshing) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        color = colorResource(R.color.text_widget_header),
-                    )
-                } else {
-                    Image(
-                        modifier = Modifier.size(18.dp),
-                        painter = painterResource(R.drawable.ic_refresh),
-                        contentDescription = null,
-                        colorFilter = ColorFilter.tint(colorResource(R.color.text_widget_header)),
-                    )
-                }
-            }
-        }
+        Text(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 2.dp),
+            text = lastUpdatedText,
+            style = TextStyle(
+                color = colorResource(R.color.text_widget_header),
+                fontSize = TextUnit(fontSize, TextUnitType.Sp),
+                textAlign = TextAlign.End,
+                fontWeight = FontWeight.Normal,
+            ),
+        )
     }
 }
 
