@@ -46,11 +46,11 @@
   </string-array>
 
   <string-array name="sync_periods">
+    <item>5 seconds</item>
+    <item>30 seconds</item>
+    <item>1 minute</item>
     <item>5 minutes</item>
     <item>15 minutes</item>
-    <item>30 minutes</item>
-    <item>45 minutes</item>
-    <item>1 hour</item>
   </string-array>
 
   <string-array name="days">

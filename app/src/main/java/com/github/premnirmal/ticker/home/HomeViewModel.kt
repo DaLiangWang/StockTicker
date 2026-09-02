@@ -1,12 +1,11 @@
 package com.github.premnirmal.ticker.home
 
 import android.app.Application
-import android.os.Build
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.github.premnirmal.ticker.AppPreferences
 import com.github.premnirmal.ticker.components.AppNumberFormat
 import com.github.premnirmal.ticker.components.DecimalFormatter
-import com.github.premnirmal.ticker.model.AlarmScheduler
 import com.github.premnirmal.ticker.model.FetchState
 import com.github.premnirmal.ticker.model.PortfolioSummary
 import com.github.premnirmal.ticker.model.StocksProvider
@@ -29,7 +28,7 @@ class HomeViewModel constructor(
     private val stocksProvider: StocksProvider,
     private val trendingProvider: TrendingProvider,
     private val widgetDataProvider: WidgetDataProvider,
-    private val alarmScheduler: AlarmScheduler,
+    private val appPreferences: AppPreferences,
 ) : AndroidViewModel(application) {
 
     val fetchState: StateFlow<FetchState>
@@ -50,9 +49,6 @@ class HomeViewModel constructor(
 
     val hasHoldings: Boolean
         get() = stocksProvider.hasPositions()
-
-    val showAlarmPermissionRequest: Boolean
-        get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && !alarmScheduler.canScheduleExactAlarm()
 
     private var fetchJob: Job? = null
 
@@ -131,7 +127,9 @@ class HomeViewModel constructor(
                 if (result.wasSuccessful) {
                     isMarketOpen = result.data.any { it.isMarketOpen }
                 }
-                delay(StocksProvider.DEFAULT_INTERVAL_MS)
+                // The interval comes from the settings "update interval" preference and is read
+                // every round so a change takes effect without restarting the app.
+                delay(appPreferences.updateIntervalMs)
             } while (result.wasSuccessful && isMarketOpen)
         }
     }

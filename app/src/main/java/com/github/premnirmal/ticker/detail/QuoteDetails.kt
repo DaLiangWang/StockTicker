@@ -22,6 +22,9 @@ fun buildQuoteDetails(quote: Quote, context: Context): List<QuoteDetailItem> {
         }
     }
     add(R.string.quote_details_open, quote.open?.let { quote.priceFormat.format(it) })
+    if (quote.previousClose > 0f) {
+        add(R.string.previous_close, quote.priceFormat.format(quote.previousClose))
+    }
     if (quote.dayLow != null && quote.dayHigh != null) {
         add(R.string.quote_details_day_range, "${quote.dayLow!!.format()} - ${quote.dayHigh!!.format()}")
     }
@@ -30,15 +33,8 @@ fun buildQuoteDetails(quote: Quote, context: Context): List<QuoteDetailItem> {
         R.string.quote_details_two_hundred_day_average,
         quote.twoHundredDayAverage?.takeIf { it > 0f }?.format()
     )
-    if (quote.fiftyTwoWeekLow != null && quote.fiftyTwoWeekHigh != null) {
-        add(
-            R.string.quote_details_ftw_range,
-            "${quote.fiftyTwoWeekLow!!.format()} - ${quote.fiftyTwoWeekHigh!!.format()}"
-        )
-    }
     add(R.string.quote_details_volume, quote.regularMarketVolume?.format())
     add(R.string.quote_details_market_cap, quote.marketCap?.formatBigNumbers(context))
-    add(R.string.quote_details_pe_ratio, quote.trailingPE?.format())
     add(
         R.string.quote_details_earnings_date,
         quote.earningsTimestamp?.formatDate(context.getString(R.string.date_format_long))

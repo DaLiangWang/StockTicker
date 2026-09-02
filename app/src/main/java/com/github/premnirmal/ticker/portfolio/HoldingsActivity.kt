@@ -29,7 +29,6 @@ import com.google.accompanist.adaptive.TwoPane
 import com.google.accompanist.adaptive.calculateDisplayFeatures
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import java.text.NumberFormat
-import kotlin.getValue
 
 class HoldingsActivity : BaseActivity() {
     override val simpleName: String
@@ -89,7 +88,8 @@ class HoldingsActivity : BaseActivity() {
             title = stringResource(R.string.add_position),
             sharesLabel = stringResource(R.string.number_of_shares),
             priceLabel = stringResource(R.string.price),
-            addLabel = stringResource(R.string.add),
+            addLabel = stringResource(R.string.buy_in),
+            sellLabel = stringResource(R.string.sell_out),
             currentPositionsLabel = stringResource(R.string.current_positions),
             sharesColumnLabel = stringResource(R.string.shares),
             priceColumnLabel = stringResource(R.string.price),
@@ -101,6 +101,7 @@ class HoldingsActivity : BaseActivity() {
             formatNumber = { AppPreferences.DECIMAL_FORMAT.format(it) },
             onBack = { finish() },
             onAdd = { priceText, sharesText -> onAddClicked(priceText, sharesText) },
+            onSell = { priceText, sharesText -> onSellClicked(priceText, sharesText) },
             onRemove = { viewModel.removeHolding(ticker, it) },
             twoPane = if (contentType == SINGLE_PANE) {
                 null
@@ -151,6 +152,47 @@ class HoldingsActivity : BaseActivity() {
             }
             if (!sharesError && !priceError) {
                 viewModel.addHolding(ticker, shares, price)
+            }
+        } else {
+            sharesError = true
+            priceError = true
+            appMessaging.sendSnackbar(R.string.invalid_number)
+        }
+        return Pair(priceError, sharesError)
+    }
+
+    private fun onSellClicked(
+        priceText: String,
+        sharesText: String,
+    ): Pair<Boolean, Boolean> {
+        var priceError = false
+        var sharesError = false
+        if (priceText.isNotEmpty() && sharesText.isNotEmpty()) {
+            var price = 0f
+            var shares = 0f
+            try {
+                val numberFormat: NumberFormat = NumberFormat.getNumberInstance()
+                price = numberFormat.parse(priceText)!!.toFloat()
+            } catch (e: NumberFormatException) {
+                priceError = true
+                appMessaging.sendSnackbar(R.string.invalid_number)
+            }
+            try {
+                val numberFormat: NumberFormat = NumberFormat.getNumberInstance()
+                shares = numberFormat.parse(sharesText)!!.toFloat()
+            } catch (e: NumberFormatException) {
+                sharesError = true
+                appMessaging.sendSnackbar(R.string.invalid_number)
+            }
+            // Check for zero shares.
+            if (!sharesError && !priceError) {
+                if (shares == 0.0f) {
+                    sharesError = true
+                    appMessaging.sendSnackbar(R.string.invalid_number)
+                }
+            }
+            if (!sharesError && !priceError) {
+                viewModel.addSellHolding(ticker, shares, price)
             }
         } else {
             sharesError = true

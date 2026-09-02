@@ -54,8 +54,11 @@ import com.github.premnirmal.ticker.model.ChartData
 import com.github.premnirmal.ticker.model.Range
 import com.github.premnirmal.ticker.network.data.DataPoint
 
+import com.github.premnirmal.ticker.components.AppNumberFormat
+import com.github.premnirmal.ticker.network.data.HOLDING_TYPE_SELL
 import com.github.premnirmal.ticker.network.data.Position
 import com.github.premnirmal.ticker.network.data.Quote
+import com.github.premnirmal.tickerwidget.ui.theme.SharedColours
 import com.github.premnirmal.ticker.ui.ErrorState
 import com.github.premnirmal.ticker.ui.TopBar
 
@@ -95,8 +98,9 @@ data class QuoteDetailStrings(
     val rangeMax: String,
     val positions: String,
     val alerts: String,
-    val notes: String,
-    val displayname: String,
+    val history: String,
+    val buyIn: String,
+    val sellOut: String,
     val shares: String,
     val equityValue: String,
     val averagePrice: String,
@@ -145,8 +149,9 @@ fun QuoteDetailScreen(
     range: Range,
     graphError: Boolean,
     position: Position?,
-    notes: String,
-    displayname: String,
+    historyLabel: String,
+    buyLabel: String,
+    sellLabel: String,
     strings: QuoteDetailStrings,
     refreshIcon: Painter,
     editIcon: Painter,
@@ -154,8 +159,6 @@ fun QuoteDetailScreen(
     onRefresh: () -> Unit,
     onCardClick: (title: String, data: String) -> Unit,
     onEditPositions: () -> Unit,
-    onEditNotes: () -> Unit,
-    onEditDisplayname: () -> Unit,
     hourAxisFormatter: (Double) -> String,
     dateAxisFormatter: (Double) -> String,
     valueAxisFormatter: (Double) -> String,
@@ -221,8 +224,8 @@ fun QuoteDetailScreen(
                     )
                     quoteDetailsGrid(details, card, onCardClick)
                     quotePositionsNotesAlerts(
-                        quote, isInPortfolio, position, notes, displayname, strings, upColor, downColor, editIcon,
-                        card, onEditPositions, onEditNotes, onEditDisplayname
+                        quote, isInPortfolio, position, strings, upColor, downColor, editIcon,
+                        card, onEditPositions, historyLabel, buyLabel, sellLabel
                     )
                     item {
                         Spacer(modifier = Modifier.height(16.dp))
@@ -255,8 +258,8 @@ fun QuoteDetailScreen(
                         ) {
                             quoteDetailsGrid(details, card, onCardClick)
                             quotePositionsNotesAlerts(
-                                quote, isInPortfolio, position, notes, displayname, strings, upColor, downColor, editIcon,
-                                card, onEditPositions, onEditNotes, onEditDisplayname
+                                quote, isInPortfolio, position, strings, upColor, downColor, editIcon,
+                                card, onEditPositions, historyLabel, buyLabel, sellLabel
                             )
                             item {
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -453,16 +456,15 @@ private fun LazyGridScope.quotePositionsNotesAlerts(
     quote: Quote,
     isInPortfolio: Boolean,
     position: Position?,
-    notes: String,
-    displayname: String,
     strings: QuoteDetailStrings,
     upColor: Color,
     downColor: Color,
     editIcon: Painter,
     card: @Composable (modifier: Modifier, onClick: () -> Unit, content: @Composable ColumnScope.() -> Unit) -> Unit,
     onEditPositions: () -> Unit,
-    onEditNotes: () -> Unit,
-    onEditDisplayname: () -> Unit,
+    historyLabel: String,
+    buyLabel: String,
+    sellLabel: String,
 ) {
     if (isInPortfolio) {
         item(span = {
@@ -489,51 +491,67 @@ private fun LazyGridScope.quotePositionsNotesAlerts(
         item(span = {
             GridItemSpan(maxLineSpan)
         }) {
+            PositionHistoryCard(
+                modifier = Modifier.padding(top = 8.dp),
+                position = position,
+                historyLabel = historyLabel,
+                buyLabel = buyLabel,
+                sellLabel = sellLabel,
+            )
         }
-        item(span = {
-            GridItemSpan(maxLineSpan)
-        }) {
-            Column(
-                modifier = Modifier.clickable {
-                    onEditNotes()
-                }
-            ) {
-                EditSectionHeader(title = strings.notes, editIcon = editIcon)
-                Text(
+    }
+}
+
+@Composable
+private fun PositionHistoryCard(
+    modifier: Modifier = Modifier,
+    position: Position?,
+    historyLabel: String,
+    buyLabel: String,
+    sellLabel: String,
+) {
+    val holdings = position?.holdings?.sortedBy { it.id ?: 0L } ?: emptyList()
+    Column(modifier = modifier.fillMaxWidth()) {
+        Text(
+            modifier = Modifier.padding(vertical = 8.dp),
+            text = historyLabel,
+            style = MaterialTheme.typography.labelMedium,
+        )
+        if (holdings.isEmpty()) {
+            Text(
+                modifier = Modifier.padding(bottom = 8.dp),
+                text = "--",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        } else {
+            holdings.forEach { holding ->
+                val isSell = holding.type == HOLDING_TYPE_SELL
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 16.dp)
-                        .clickable {
-                            onEditNotes()
-                        },
-                    text = notes.ifEmpty { "--" },
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
-        }
-        item(span = {
-            GridItemSpan(maxLineSpan)
-        }) {
-            Column(
-                modifier = Modifier.clickable {
-                    onEditDisplayname()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = if (isSell) sellLabel else buyLabel,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = if (isSell) SharedColours.DownColour else SharedColours.UpColour,
+                    )
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = AppNumberFormat.selected.format(holding.shares),
+                        textAlign = TextAlign.Center,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = AppNumberFormat.selected.format(holding.price),
+                        textAlign = TextAlign.End,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
-            ) {
-                EditSectionHeader(title = strings.displayname, editIcon = editIcon)
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp, bottom = 16.dp)
-                        .clickable {
-                            onEditDisplayname()
-                        },
-                    text = displayname.ifEmpty { "--" },
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 4,
-                    overflow = TextOverflow.Ellipsis
-                )
             }
         }
     }

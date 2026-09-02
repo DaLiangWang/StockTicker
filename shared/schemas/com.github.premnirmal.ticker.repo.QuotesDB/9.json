@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 9,
-    "identityHash": "31d19791f8d1805f45248a5131ade017",
+    "identityHash": "9b77bf423e5911e21b23cf41a34b44ff",
     "entities": [
       {
         "tableName": "QuoteRow",
@@ -179,7 +179,7 @@
       },
       {
         "tableName": "HoldingRow",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `quote_symbol` TEXT NOT NULL, `shares` REAL NOT NULL, `price` REAL NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT, `quote_symbol` TEXT NOT NULL, `shares` REAL NOT NULL, `price` REAL NOT NULL, `type` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -202,6 +202,12 @@
             "fieldPath": "price",
             "columnName": "price",
             "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -304,7 +310,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '31d19791f8d1805f45248a5131ade017')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9b77bf423e5911e21b23cf41a34b44ff')"
     ]
   }
 }

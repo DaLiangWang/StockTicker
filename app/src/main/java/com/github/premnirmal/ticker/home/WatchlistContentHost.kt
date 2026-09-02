@@ -49,7 +49,6 @@ fun WatchlistContent(
                 modifier = cardModifier,
                 quote = quote,
                 onClick = { onClick() },
-                showMore = true,
                 onRemoveClick = onRemoveClick,
             )
         },

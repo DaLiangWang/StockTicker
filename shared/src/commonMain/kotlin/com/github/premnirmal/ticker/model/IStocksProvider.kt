@@ -36,19 +36,16 @@ interface IStocksProvider {
   /** Epoch-millis timestamp of the next scheduled refresh, as an observable flow. */
   val nextFetchMs: StateFlow<Long>
 
-  /** Schedules the next periodic refresh. [reason] is used for diagnostics/logging only. */
-  fun scheduleUpdate(reason: String = "regular")
-
   /** Whether [ticker] is in the watchlist. */
   fun hasTicker(ticker: String): Boolean
 
   /**
-   * Fetches fresh quotes for the whole watchlist. When [allowScheduling] is `true` the next refresh
-   * is (re)scheduled as part of the fetch.
+   * Fetches fresh quotes for the whole watchlist. When [allowScheduling] is `true` the fetch
+   * updates the last-fetched bookkeeping and the refreshing flag.
    */
   suspend fun fetch(allowScheduling: Boolean = true): FetchResult<List<Quote>>
 
-  /** Schedules the periodic refresh if one is not already pending. */
+  /** Enqueues the periodic widget refresh (if the auto-refresh toggle is on) and the cleanup work. */
   fun schedule()
 
   /** Adds [ticker] to the watchlist, returning the updated set of symbols. */
@@ -65,6 +62,9 @@ interface IStocksProvider {
 
   /** Adds a holding ([shares] at [price]) to [ticker], returning the created [Holding]. */
   suspend fun addHolding(ticker: String, shares: Float, price: Float): Holding
+
+  /** Adds a sell-out (出仓) transaction ([shares] sold at [price]) to [ticker]. */
+  suspend fun addSellHolding(ticker: String, shares: Float, price: Float): Holding
 
   /**
    * Replaces everything currently held for [ticker] with a single holding of [shares] at [price],

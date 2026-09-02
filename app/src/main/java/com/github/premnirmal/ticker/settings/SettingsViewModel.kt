@@ -4,7 +4,7 @@ import android.appwidget.AppWidgetManager
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.premnirmal.ticker.AppPreferences
-import com.github.premnirmal.ticker.model.StocksProvider
+import com.github.premnirmal.ticker.model.AlarmScheduler
 import com.github.premnirmal.ticker.widget.WidgetData
 import com.github.premnirmal.ticker.widget.WidgetDataProvider
 import com.github.premnirmal.tickerwidget.R
@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 class SettingsViewModel constructor(
     private val widgetDataProvider: WidgetDataProvider,
     private val appPreferences: AppPreferences,
-    private val stocksProvider: StocksProvider,
+    private val alarmScheduler: AlarmScheduler,
 ) : ViewModel() {
 
     val settings: StateFlow<SettingsData>
@@ -55,12 +55,31 @@ class SettingsViewModel constructor(
         }
     }
 
+    /**
+     * Persists the in-app home auto-refresh interval. This no longer affects the widgets: their
+     * background refresh is a separate fixed 15-minute toggle (see [setWidgetAutoRefresh]).
+     */
     fun setUpdateIntervalPref(intervalPref: Int) {
         viewModelScope.launch {
             appPreferences.updateIntervalPref = intervalPref
             _settings.emit(buildData(widgetDataProvider.dataForWidgetId(AppWidgetManager.INVALID_APPWIDGET_ID)))
-            stocksProvider.scheduleUpdate()
             broadcastUpdateWidget()
+        }
+    }
+
+    /**
+     * Toggles the fixed 15-minute WorkManager background refresh for the home-screen widgets,
+     * enqueuing or cancelling the periodic work immediately so the change takes effect at once.
+     */
+    fun setWidgetAutoRefresh(enabled: Boolean) {
+        viewModelScope.launch {
+            appPreferences.setWidgetAutoRefresh(enabled)
+            if (enabled) {
+                alarmScheduler.enqueuePeriodicRefresh()
+            } else {
+                alarmScheduler.cancelPeriodicRefresh()
+            }
+            _settings.emit(buildData(widgetDataProvider.dataForWidgetId(AppWidgetManager.INVALID_APPWIDGET_ID)))
         }
     }
 
@@ -133,7 +152,8 @@ class SettingsViewModel constructor(
             endTime = appPreferences.endTime(),
             autoSort = if (!widgetDataProvider.hasWidget()) widgetData.autoSortEnabled() else null,
             roundToTwoDp = appPreferences.roundToTwoDecimalPlaces(),
-            aShareDataSourcePref = appPreferences.aShareDataSourcePref
+            aShareDataSourcePref = appPreferences.aShareDataSourcePref,
+            widgetAutoRefresh = appPreferences.widgetAutoRefresh
         )
     }
 

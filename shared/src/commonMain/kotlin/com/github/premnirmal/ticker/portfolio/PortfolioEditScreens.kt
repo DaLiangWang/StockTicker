@@ -42,6 +42,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.github.premnirmal.ticker.network.data.HOLDING_TYPE_SELL
 import com.github.premnirmal.ticker.network.data.Holding
 import com.github.premnirmal.ticker.network.data.HoldingSum
 import com.github.premnirmal.ticker.ui.AppTextFieldDefaultColors
@@ -256,6 +257,7 @@ fun AddPositionScreen(
     sharesLabel: String,
     priceLabel: String,
     addLabel: String,
+    sellLabel: String,
     currentPositionsLabel: String,
     sharesColumnLabel: String,
     priceColumnLabel: String,
@@ -267,6 +269,7 @@ fun AddPositionScreen(
     formatNumber: (Float) -> String,
     onBack: () -> Unit,
     onAdd: (priceText: String, sharesText: String) -> Pair<Boolean, Boolean>,
+    onSell: (priceText: String, sharesText: String) -> Pair<Boolean, Boolean>,
     onRemove: (Holding) -> Unit,
     twoPane: (@Composable (first: @Composable () -> Unit, second: @Composable () -> Unit) -> Unit)? = null,
 ) {
@@ -295,7 +298,9 @@ fun AddPositionScreen(
                 sharesLabel = sharesLabel,
                 priceLabel = priceLabel,
                 addLabel = addLabel,
+                sellLabel = sellLabel,
                 onAdd = onAdd,
+                onSell = onSell,
             )
         }
         val currentHoldings: @Composable () -> Unit = {
@@ -364,7 +369,9 @@ private fun AddPositionInput(
     sharesLabel: String,
     priceLabel: String,
     addLabel: String,
+    sellLabel: String,
     onAdd: (priceText: String, sharesText: String) -> Pair<Boolean, Boolean>,
+    onSell: (priceText: String, sharesText: String) -> Pair<Boolean, Boolean>,
 ) {
     val decimalFormatter = remember { DecimalFormatter() }
     var sharesError by remember { mutableStateOf(false) }
@@ -423,6 +430,23 @@ private fun AddPositionInput(
                 style = MaterialTheme.typography.labelLarge,
             )
         }
+        Button(
+            modifier = Modifier.align(Alignment.CenterHorizontally).padding(bottom = 16.dp),
+            onClick = {
+                val pair = onSell(priceText, sharesText)
+                priceError = pair.first
+                sharesError = pair.second
+                if (!priceError && !sharesError) {
+                    priceText = ""
+                    sharesText = ""
+                }
+            },
+        ) {
+            Text(
+                text = sellLabel.uppercase(),
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
     }
 }
 
@@ -463,13 +487,19 @@ private fun CurrentHoldings(
                 key = { i -> holdings[i].id ?: i }
             ) { i ->
                 val holding = holdings[i]
+                val isSell = holding.type == HOLDING_TYPE_SELL
                 HoldingRow(
                     modifier = Modifier.padding(bottom = 8.dp),
-                    shares = formatNumber(holding.shares),
+                    shares = if (isSell) "-" + formatNumber(holding.shares) else formatNumber(holding.shares),
                     price = formatNumber(holding.price),
                     value = formatNumber(holding.totalValue()),
                     removeContentDescription = removeContentDescription,
                     removeIcon = removeIcon,
+                    style = if (isSell) {
+                        MaterialTheme.typography.bodyLarge.copy(color = Color.Red)
+                    } else {
+                        MaterialTheme.typography.bodyLarge
+                    },
                     showRemoveButton = true,
                     onRemoveClick = { onRemove(holding) }
                 )

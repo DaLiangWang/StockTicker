@@ -33,7 +33,9 @@
   <string name="text_color">文字颜色</string>
   <string name="start_time">开始时间</string>
   <string name="end_time">结束时间</string>
-  <string name="update_interval">更新间隔</string>
+  <string name="update_interval">首页刷新间隔</string>
+  <string name="widget_auto_refresh">桌面组件自动刷新</string>
+  <string name="widget_auto_refresh_desc">在后台每 15 分钟自动刷新桌面组件</string>
   <string name="update_days">更新日</string>
   <string name="update_days_desc">将在这些日期进行更新</string>
   <string name="round_two_dp">保留两位小数</string>
@@ -83,6 +85,11 @@
   <string name="price">价格</string>
   <string name="add_position">持仓</string>
   <string name="add">添加</string>
+  <string name="buy_in">进仓</string>
+  <string name="sell_out">出仓</string>
+  <string name="previous_close">昨收</string>
+  <string name="position_history">持仓记录</string>
+  <string name="reduce_position">减持</string>
   <string name="done">完成</string>
   <string name="skip">跳过</string>
   <string name="edit_position">持仓</string>

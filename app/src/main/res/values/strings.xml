@@ -50,7 +50,9 @@
   <string name="text_color">Text color</string>
   <string name="start_time">Start time</string>
   <string name="end_time">End time</string>
-  <string name="update_interval">Update interval</string>
+  <string name="update_interval">Home refresh interval</string>
+  <string name="widget_auto_refresh">Widget auto refresh</string>
+  <string name="widget_auto_refresh_desc">Refresh home-screen widgets every 15 minutes in the background</string>
   <string name="update_days">Update days</string>
   <string name="update_days_desc">Updates will occur on these days</string>
   <string name="round_two_dp">Round to 2 dp</string>
@@ -101,6 +103,11 @@
   <string name="price">Price</string>
   <string name="add_position">Positions</string>
   <string name="add">Add</string>
+  <string name="buy_in">Buy in</string>
+  <string name="sell_out">Sell out</string>
+  <string name="previous_close">Prev Close</string>
+  <string name="position_history">Position History</string>
+  <string name="reduce_position">Reduce Position</string>
   <string name="done">Done</string>
   <string name="skip">Skip</string>
   <string name="edit_position">Positions</string>

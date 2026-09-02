@@ -118,13 +118,14 @@ data class Quote constructor(
 
     fun holdingsString(): String = AppNumberFormat.selected.format(holdings())
 
-    fun gainLoss(): Float = holdings() - totalPositionShares() * positionPrice()
+    fun gainLoss(): Float = position?.cumulativeGainLoss(lastTradePrice) ?: 0f
 
     fun gainLossString(): String = signedValue(gainLoss())
 
     private fun gainLossPercent(): Float {
-        if (totalPositionPrice() == 0f) return 0f
-        return (gainLoss() / totalPositionPrice()) * 100f
+        val invested = position?.netInvested() ?: 0f
+        if (invested == 0f) return 0f
+        return (gainLoss() / invested) * 100f
     }
 
     fun gainLossPercentString(): String = signedPercent(gainLossPercent())

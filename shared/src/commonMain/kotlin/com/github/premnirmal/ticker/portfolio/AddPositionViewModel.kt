@@ -53,6 +53,14 @@ class AddPositionViewModel constructor(private val stocksProvider: IStocksProvid
         }
     }
 
+    fun addSellHolding(symbol: String, shares: Float, price: Float) {
+        viewModelScope.launch {
+            val holding = stocksProvider.addSellHolding(symbol, shares, price)
+            loadQuoteInternal(symbol)
+            _addedHolding.emit(holding)
+        }
+    }
+
     private fun loadQuoteInternal(symbol: String) {
         _quote.value = getQuote(symbol)
         _position.value = getPosition(symbol)

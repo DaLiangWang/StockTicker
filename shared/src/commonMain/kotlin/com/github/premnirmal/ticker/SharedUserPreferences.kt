@@ -34,11 +34,11 @@ open class SharedUserPreferences(
 
     override val updateIntervalMs: Long
         get() = when (store.getInt(UPDATE_INTERVAL, 0)) {
-            0 -> 5 * 60 * 1000L
-            1 -> 15 * 60 * 1000L
-            2 -> 30 * 60 * 1000L
-            3 -> 45 * 60 * 1000L
-            4 -> 60 * 60 * 1000L
+            0 -> 5 * 1000L
+            1 -> 30 * 1000L
+            2 -> 60 * 1000L
+            3 -> 5 * 60 * 1000L
+            4 -> 15 * 60 * 1000L
             else -> 15 * 60 * 1000L
         }
 
@@ -49,6 +49,22 @@ open class SharedUserPreferences(
         }
 
     private val _isRefreshing = MutableStateFlow(store.getBoolean(WIDGET_REFRESHING, false))
+
+    // --- Widget auto refresh (Android-only; iOS widgets refresh via WidgetKit timelines) ---
+
+    private val _widgetAutoRefresh = MutableStateFlow(store.getBoolean(WIDGET_AUTO_REFRESH, true))
+
+    /**
+     * Whether the periodic (fixed 15-minute) WorkManager background refresh for the home-screen
+     * widgets is enabled. Android-only setting — not part of the cross-platform [UserPreferences].
+     */
+    val widgetAutoRefresh: Boolean
+        get() = _widgetAutoRefresh.value
+
+    fun setWidgetAutoRefresh(enabled: Boolean) {
+        _widgetAutoRefresh.value = enabled
+        store.setBoolean(WIDGET_AUTO_REFRESH, enabled)
+    }
 
     override val isRefreshing: StateFlow<Boolean>
         get() = _isRefreshing
@@ -172,6 +188,7 @@ open class SharedUserPreferences(
 
     companion object {
         const val UPDATE_INTERVAL = "UPDATE_INTERVAL"
+        const val WIDGET_AUTO_REFRESH = "WIDGET_AUTO_REFRESH"
         const val WIDGET_REFRESHING = "WIDGET_REFRESHING"
         const val TUTORIAL_SHOWN = "TUTORIAL_SHOWN"
         const val APP_VERSION_CODE = "APP_VERSION_CODE"

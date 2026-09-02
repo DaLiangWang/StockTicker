@@ -78,12 +78,10 @@ fun HomeNavHostWrapper(
             )
         },
         settings = {
-            val homeViewModel = koinViewModel<HomeViewModel>(viewModelStoreOwner = viewModelStoreOwner)
             SettingsScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.surface),
-                homeViewModel = homeViewModel,
             )
         },
     )

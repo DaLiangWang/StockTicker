@@ -23,9 +23,7 @@ import com.github.premnirmal.ticker.navigation.calculateContentAndNavigationType
 import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.ticker.network.data.changeColour
 import com.github.premnirmal.ticker.news.QuoteDetailViewModel
-import com.github.premnirmal.ticker.portfolio.DisplaynameActivity
 import com.github.premnirmal.ticker.portfolio.HoldingsActivity
-import com.github.premnirmal.ticker.portfolio.NotesActivity
 import com.github.premnirmal.ticker.ui.ContentType.SINGLE_PANE
 import com.github.premnirmal.ticker.ui.LocalAppMessaging
 import com.github.premnirmal.ticker.ui.fadingEdges
@@ -87,30 +85,12 @@ fun QuoteDetailScreen(
 
     // Per-section editable state, updated by the activity-result launchers below.
     var holdings by remember(currentQuote.position) { mutableStateOf(currentQuote.position) }
-    var notes by remember(currentQuote.properties) { mutableStateOf(currentQuote.properties?.notes ?: "") }
-    var displayname by remember(currentQuote.properties) {
-        mutableStateOf(currentQuote.properties?.displayname ?: "")
-    }
 
     val holdingsLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { result: ActivityResult ->
         if (result.resultCode == Activity.RESULT_OK) {
             holdings = result.data?.getParcelableExtra(HoldingsActivity.POSITIONS) ?: holdings
-        }
-    }
-    val notesLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result: ActivityResult ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            notes = result.data?.getStringExtra(NotesActivity.NOTES) ?: notes
-        }
-    }
-    val displaynameLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.StartActivityForResult()
-    ) { result: ActivityResult ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            displayname = result.data?.getStringExtra(DisplaynameActivity.DISPLAYNAME) ?: displayname
         }
     }
 
@@ -125,8 +105,9 @@ fun QuoteDetailScreen(
         rangeMax = stringResource(R.string.max),
         positions = stringResource(R.string.positions),
         alerts = stringResource(R.string.alerts),
-        notes = stringResource(R.string.notes),
-        displayname = stringResource(R.string.displayname),
+        history = stringResource(R.string.position_history),
+        buyIn = stringResource(R.string.buy_in),
+        sellOut = stringResource(R.string.sell_out),
         shares = stringResource(R.string.shares),
         equityValue = stringResource(R.string.equity_value),
         averagePrice = stringResource(R.string.average_price),
@@ -155,8 +136,9 @@ fun QuoteDetailScreen(
         range = range,
         graphError = graphError != null,
         position = holdings,
-        notes = notes,
-        displayname = displayname,
+        historyLabel = strings.history,
+        buyLabel = strings.buyIn,
+        sellLabel = strings.sellOut,
         strings = strings,
         refreshIcon = painterResource(R.drawable.ic_refresh),
         editIcon = painterResource(R.drawable.ic_edit),
@@ -173,18 +155,7 @@ fun QuoteDetailScreen(
                     .putExtra(HoldingsActivity.TICKER, currentQuote.symbol)
             )
         },
-        onEditNotes = {
-            notesLauncher.launch(
-                Intent(context, NotesActivity::class.java)
-                    .putExtra(NotesActivity.TICKER, currentQuote.symbol)
-            )
-        },
-        onEditDisplayname = {
-            displaynameLauncher.launch(
-                Intent(context, DisplaynameActivity::class.java)
-                    .putExtra(DisplaynameActivity.TICKER, currentQuote.symbol)
-            )
-        },
+
         hourAxisFormatter = ::formatAxisHour,
         dateAxisFormatter = ::formatAxisDate,
         valueAxisFormatter = ::formatAxisValue,

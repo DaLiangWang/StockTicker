@@ -44,8 +44,6 @@ class FakeStocksProvider(
         _portfolio.value = quotesBySymbol.values.toList()
     }
 
-    override fun scheduleUpdate(reason: String) = Unit
-
     override fun hasTicker(ticker: String): Boolean = quotesBySymbol.containsKey(ticker)
 
     override suspend fun fetch(allowScheduling: Boolean): FetchResult<List<Quote>> =
@@ -71,6 +69,17 @@ class FakeStocksProvider(
 
     override suspend fun addHolding(ticker: String, shares: Float, price: Float): Holding {
         val holding = Holding(symbol = ticker, shares = shares, price = price, id = nextHoldingId++)
+        val quote = quotesBySymbol.getOrPut(ticker) { Quote(symbol = ticker) }
+        val position = quote.position ?: Position(ticker).also { quote.position = it }
+        position.add(holding)
+        return holding
+    }
+
+    override suspend fun addSellHolding(ticker: String, shares: Float, price: Float): Holding {
+        val holding = Holding(
+            symbol = ticker, shares = shares, price = price,
+            id = nextHoldingId++, type = com.github.premnirmal.ticker.network.data.HOLDING_TYPE_SELL
+        )
         val quote = quotesBySymbol.getOrPut(ticker) { Quote(symbol = ticker) }
         val position = quote.position ?: Position(ticker).also { quote.position = it }
         position.add(holding)

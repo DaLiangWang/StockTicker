@@ -46,7 +46,6 @@ import com.github.premnirmal.ticker.ui.TopBar
  *    [String]/[Array] parameters resolved by the host via `stringResource`/`stringArrayResource`,
  *  - all user actions as callback lambdas,
  *  - the `Divider` as a composable [divider] slot (it lives in the Android `:UI` module),
- *  - the alarm-permission banner as an optional [alarmPermissionBanner] slot,
  *  - the fading-edge decoration as [listFadingEdges] (Android `RuntimeShader`),
  *  - the navigation scroll-to-top registration as [registerScrollToTop],
  *  - the version/open-source fonts as nullable [FontFamily] parameters.
@@ -80,14 +79,15 @@ fun SettingsScreen(
     onUpdateDaysSelected: (Set<Int>) -> Unit,
     onRoundToTwoDpChanged: (Boolean) -> Unit,
     onAShareDataSourceSelected: (Int) -> Unit = {},
+    onWidgetAutoRefreshChanged: (Boolean) -> Unit = {},
     onOpenSource: () -> Unit,
     // Strings (optional additions — hosts that do not wire the feature pass nothing)
     aShareDataSourceTitle: String = "",
     aShareDataSources: Array<String> = emptyArray(),
+    widgetAutoRefreshTitle: String = "",
+    widgetAutoRefreshSubtitle: String = "",
     // Slots & modifiers
     modifier: Modifier = Modifier,
-    showAlarmPermissionRequest: Boolean = false,
-    alarmPermissionBanner: @Composable () -> Unit = {},
     divider: @Composable () -> Unit = {},
     versionFontFamily: FontFamily? = null,
     openSourceFontFamily: FontFamily? = null,
@@ -120,11 +120,6 @@ fun SettingsScreen(
             ),
             state = state,
         ) {
-            if (showAlarmPermissionRequest) {
-                stickyHeader(key = "alarm_permission_banner") {
-                    alarmPermissionBanner()
-                }
-            }
             settingsItems(
                 settingsData = settingsData,
                 appThemeTitle = appThemeTitle,
@@ -149,6 +144,9 @@ fun SettingsScreen(
                 onAShareDataSourceSelected = onAShareDataSourceSelected,
                 aShareDataSourceTitle = aShareDataSourceTitle,
                 aShareDataSources = aShareDataSources,
+                onWidgetAutoRefreshChanged = onWidgetAutoRefreshChanged,
+                widgetAutoRefreshTitle = widgetAutoRefreshTitle,
+                widgetAutoRefreshSubtitle = widgetAutoRefreshSubtitle,
                 onOpenSource = onOpenSource,
                 divider = divider,
                 openSourceFontFamily = openSourceFontFamily,
@@ -182,6 +180,9 @@ private fun LazyListScope.settingsItems(
     onAShareDataSourceSelected: (Int) -> Unit,
     aShareDataSourceTitle: String,
     aShareDataSources: Array<String>,
+    onWidgetAutoRefreshChanged: (Boolean) -> Unit,
+    widgetAutoRefreshTitle: String,
+    widgetAutoRefreshSubtitle: String,
     onOpenSource: () -> Unit,
     divider: @Composable () -> Unit,
     openSourceFontFamily: FontFamily?,
@@ -255,6 +256,17 @@ private fun LazyListScope.settingsItems(
                 items = aShareDataSources,
                 selected = settingsData.aShareDataSourcePref,
                 onSelected = onAShareDataSourceSelected,
+            )
+            divider()
+        }
+    }
+    if (widgetAutoRefreshTitle.isNotEmpty()) {
+        item {
+            CheckboxPreference(
+                title = widgetAutoRefreshTitle,
+                subtitle = widgetAutoRefreshSubtitle,
+                checked = settingsData.widgetAutoRefresh,
+                onCheckChanged = onWidgetAutoRefreshChanged,
             )
             divider()
         }

@@ -1,41 +1,58 @@
 package com.github.premnirmal.ticker.detail
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.github.premnirmal.shared.resources.Res
 import com.github.premnirmal.shared.resources.change_percent
 import com.github.premnirmal.shared.resources.cost_price
-import com.github.premnirmal.shared.resources.ic_more
-import com.github.premnirmal.shared.resources.ic_remove_circle
 import com.github.premnirmal.shared.resources.market_cap
+import com.github.premnirmal.shared.resources.ic_more
+import com.github.premnirmal.shared.resources.cancel
+import com.github.premnirmal.shared.resources.ic_remove_circle
 import com.github.premnirmal.shared.resources.remove
+import com.github.premnirmal.shared.resources.remove_confirm_message
+import com.github.premnirmal.shared.resources.remove_confirm_title
 import com.github.premnirmal.shared.resources.shares_with_cost
 import com.github.premnirmal.shared.resources.today_profit
 import com.github.premnirmal.shared.resources.total_gain_amount
@@ -43,6 +60,7 @@ import com.github.premnirmal.shared.resources.total_profit
 import com.github.premnirmal.ticker.network.data.Quote
 import com.github.premnirmal.tickerwidget.ui.AppCard
 import com.github.premnirmal.tickerwidget.ui.theme.SharedColours
+import kotlin.math.roundToInt
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
@@ -56,6 +74,7 @@ private val RIGHT_COLUMN_WIDTH = 130.dp
 private val COLUMN_GAP = 8.dp
 private val NAME_PRICE_GAP = 6.dp
 private val ROW_VERTICAL_GAP = 4.dp
+private val ACTION_WIDTH = 76.dp
 
 /**
  * Narrowest width the watchlist table may take.
@@ -77,93 +96,207 @@ val QUOTE_TABLE_WIDTH: Dp = NAME_MIN_WIDTH + COLUMN_GAP + RIGHT_COLUMN_WIDTH +
  * row scrolls together and the columns stay locked in place. The removal menu, when shown, sits past
  * the right edge.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun QuoteTableRow(
     quote: Quote,
     modifier: Modifier = Modifier,
     onClick: (Quote) -> Unit,
     onRemoveClick: (Quote) -> Unit = {},
-    showMore: Boolean = false,
 ) {
     val up = quote.isUp
     val down = quote.isDown
     val gain = quote.gainLoss()
     val hasPositions = quote.hasPositions()
 
-    Row(
-        modifier = modifier
-            .clickable { onClick(quote) }
-            .padding(horizontal = TABLE_ROW_PADDING_H, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        // Left block: name on top, holdings + cost below. Stretches to fill the row.
-        Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.Bottom) {
-                QuoteSymbolText(text = quote.symbol)
-                Spacer(Modifier.width(NAME_PRICE_GAP))
-                QuoteNameText(
-                    text = quote.name,
-                    maxLines = QUOTE_MAX_LINES,
-                )
-            }
-            Spacer(Modifier.height(ROW_VERTICAL_GAP))
-            Text(
-                text = if (hasPositions) {
-                    stringResource(
-                        Res.string.shares_with_cost,
-                        quote.numSharesString(),
-                        quote.priceFormat.format(quote.position?.averagePrice() ?: 0f),
-                    )
-                } else {
-                    DASH
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-        }
-        Spacer(Modifier.width(COLUMN_GAP))
-        // Right block: price + change% on top, total P&L below, right-aligned.
-        Column(
-            modifier = Modifier.width(RIGHT_COLUMN_WIDTH),
-            horizontalAlignment = Alignment.End,
+    val density = LocalDensity.current
+    val actionWidthPx = with(density) { ACTION_WIDTH.toPx() }
+    val maxOffset = actionWidthPx
+    var offset by remember { mutableFloatStateOf(0f) }
+    var showRemoveConfirm by remember { mutableStateOf(false) }
+    val dragState = rememberDraggableState { delta ->
+        offset = (offset + delta).coerceIn(-maxOffset, 0f)
+    }
+    Box(modifier = modifier.fillMaxWidth()) {
+        // Behind the row: the remove action revealed when the row is swiped right-to-left.
+        Row(
+            modifier = Modifier
+                .matchParentSize(),
+            horizontalArrangement = Arrangement.End,
         ) {
-            Row(verticalAlignment = Alignment.Bottom) {
+            RevealActionButton(
+                text = stringResource(Res.string.remove),
+                background = MaterialTheme.colorScheme.error,
+                onClick = {
+                    offset = 0f
+                    showRemoveConfirm = true
+                },
+            )
+        }
+        if (showRemoveConfirm) {
+            AlertDialog(
+                onDismissRequest = { showRemoveConfirm = false },
+                title = { Text(text = stringResource(Res.string.remove_confirm_title)) },
+                text = {
+                    Text(text = stringResource(Res.string.remove_confirm_message, quote.symbol))
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showRemoveConfirm = false
+                            onRemoveClick(quote)
+                        }
+                    ) {
+                        Text(text = stringResource(Res.string.remove))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRemoveConfirm = false }) {
+                        Text(text = stringResource(Res.string.cancel))
+                    }
+                },
+            )
+        }
+        // Front: the row content; slides left to reveal the actions.
+        Row(
+            modifier = Modifier
+                .offset { IntOffset(x = offset.roundToInt(), y = 0) }
+                .draggable(dragState, Orientation.Horizontal, onDragStopped = { offset = if (offset < -maxOffset / 2f) -maxOffset else 0f })
+                .background(MaterialTheme.colorScheme.surface)
+                .fillMaxWidth()
+                .clickable {
+                    if (offset != 0f) {
+                        // Row is revealed: first tap collapses the actions instead of opening the quote.
+                        offset = 0f
+                    } else {
+                        onClick(quote)
+                    }
+                }
+                .padding(horizontal = TABLE_ROW_PADDING_H, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            // Left block: name on top, holdings + cost below. Stretches to fill the row.
+            Column(modifier = Modifier.weight(1f)) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    QuoteSymbolText(text = quote.symbol)
+                    Spacer(Modifier.width(NAME_PRICE_GAP))
+                    QuoteNameText(
+                        text = quote.name,
+                        maxLines = QUOTE_MAX_LINES,
+                    )
+                }
+                Spacer(Modifier.height(ROW_VERTICAL_GAP))
                 Text(
-                    text = quote.priceFormat.format(quote.lastTradePrice),
-                    style = MaterialTheme.typography.titleSmall,
+                    text = if (hasPositions) {
+                        stringResource(
+                            Res.string.shares_with_cost,
+                            quote.numSharesString(),
+                            quote.priceFormat.format(quote.position?.averagePrice() ?: 0f),
+                        )
+                    } else {
+                        DASH
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
-                Spacer(Modifier.width(NAME_PRICE_GAP))
+            }
+            Spacer(Modifier.width(COLUMN_GAP))
+            // Right block: price + change% on top, total P&L below, right-aligned.
+            Column(
+                modifier = Modifier.width(RIGHT_COLUMN_WIDTH),
+                horizontalAlignment = Alignment.End,
+            ) {
+                Row(verticalAlignment = Alignment.Bottom) {
+                    Text(
+                        text = quote.priceFormat.format(quote.lastTradePrice),
+                        style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1,
+                    )
+                    Spacer(Modifier.width(NAME_PRICE_GAP))
+                    Text(
+                        text = quote.changePercentStringWithSign(),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = SharedColours.changeColour(up, down),
+                        maxLines = 1,
+                    )
+                }
+                Spacer(Modifier.height(ROW_VERTICAL_GAP))
                 Text(
-                    text = quote.changePercentStringWithSign(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = SharedColours.changeColour(up, down),
+                    text = if (hasPositions) {
+                        stringResource(Res.string.total_gain_amount, quote.gainLossString())
+                    } else {
+                        DASH
+                    },
+                    style = MaterialTheme.typography.labelSmall,
+                    color = if (hasPositions) {
+                        SharedColours.changeColour(gain > 0, gain < 0)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     maxLines = 1,
                 )
             }
-            Spacer(Modifier.height(ROW_VERTICAL_GAP))
-            Text(
-                text = if (hasPositions) {
-                    stringResource(Res.string.total_gain_amount, quote.gainLossString())
-                } else {
-                    DASH
-                },
-                style = MaterialTheme.typography.labelSmall,
-                color = if (hasPositions) {
-                    SharedColours.changeColour(gain > 0, gain < 0)
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                maxLines = 1,
+        }
+    }
+}
+
+@Composable
+private fun RevealActionButton(text: String, background: Color, onClick: () -> Unit) {
+    Box(
+        modifier = Modifier
+            .width(ACTION_WIDTH)
+            .fillMaxHeight()
+            .background(background)
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            color = Color.White,
+            textAlign = TextAlign.Center,
+        )
+    }
+}
+
+@Composable
+private fun MoreIcon(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val showPopup = rememberSaveable { mutableStateOf(false) }
+    Box(modifier = modifier) {
+        IconButton(
+            modifier = Modifier.size(16.dp),
+            onClick = { showPopup.value = !showPopup.value },
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_more),
+                contentDescription = null,
             )
         }
-        if (showMore) {
-            MoreIcon(
-                modifier = Modifier.padding(start = 4.dp),
-                onClick = { onRemoveClick(quote) },
-            )
+        DropdownMenu(
+            expanded = showPopup.value,
+            onDismissRequest = { showPopup.value = false },
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(horizontal = 4.dp)
+                    .clickable(role = Role.Button) {
+                        showPopup.value = false
+                        onClick()
+                    }
+            ) {
+                Icon(
+                    modifier = Modifier.size(18.dp).padding(end = 4.dp),
+                    painter = painterResource(Res.drawable.ic_remove_circle),
+                    contentDescription = null,
+                )
+                Text(text = stringResource(Res.string.remove))
+            }
         }
     }
 }
@@ -264,48 +397,4 @@ fun QuoteNameText(
     )
 }
 
-@Composable
-private fun MoreIcon(
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit,
-) {
-    var showPopup by rememberSaveable { mutableStateOf(false) }
-    Box(modifier = modifier) {
-        IconButton(
-            modifier = Modifier.size(16.dp),
-            onClick = {
-                showPopup = !showPopup
-            },
-        ) {
-            Icon(
-                painter = painterResource(Res.drawable.ic_more),
-                contentDescription = null,
-            )
-        }
-        DropdownMenu(
-            expanded = showPopup,
-            onDismissRequest = {
-                showPopup = false
-            },
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(horizontal = 4.dp)
-                    .clickable(role = Role.Button) {
-                        showPopup = false
-                        onClick()
-                    }
-            ) {
-                Icon(
-                    modifier = Modifier.size(18.dp).padding(end = 4.dp),
-                    painter = painterResource(Res.drawable.ic_remove_circle),
-                    contentDescription = null,
-                )
-                Text(
-                    text = stringResource(Res.string.remove),
-                )
-            }
-        }
-    }
-}
+

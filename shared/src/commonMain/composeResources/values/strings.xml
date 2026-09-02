@@ -1,5 +1,8 @@
 <resources>
     <string name="remove">Remove</string>
+    <string name="cancel">Cancel</string>
+    <string name="remove_confirm_title">Remove from watchlist</string>
+    <string name="remove_confirm_message">Remove %1$s from your watchlist?</string>
     <string name="stock_name">Stock</string>
     <string name="today_profit">Today P&amp;L</string>
     <string name="total_profit">Total P&amp;L</string>

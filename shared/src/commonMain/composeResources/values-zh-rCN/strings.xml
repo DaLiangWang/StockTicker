@@ -1,5 +1,8 @@
 <resources>
     <string name="remove">移除</string>
+    <string name="cancel">取消</string>
+    <string name="remove_confirm_title">移除自选</string>
+    <string name="remove_confirm_message">确定要移除 %1$s 吗？</string>
     <string name="stock_name">股票</string>
     <string name="today_profit">当日盈利</string>
     <string name="total_profit">总盈利</string>

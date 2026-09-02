@@ -71,11 +71,10 @@ val appModule = module {
     single { WidgetDataProvider(androidContext()) }
     single { AppMessaging(androidContext(), get()) }
     single { FetchEventLogger(get(), get(), get()) }
-    single { AlarmScheduler(androidContext(), get(), get(), get(), get()) }
+    single { AlarmScheduler(androidContext(), get(), get(), get()) }
     single { GeneralProperties(get<StocksProvider>()) { get<WidgetDataProvider>().getAppWidgetIds().size } }
     single {
         StocksProvider(
-            androidContext(),
             get(),
             get(),
             get(),

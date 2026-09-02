@@ -1,6 +1,5 @@
 package com.github.premnirmal.ticker.model
 
-import android.content.Context
 import android.content.SharedPreferences
 import androidx.core.content.edit
 import com.github.premnirmal.ticker.AppPreferences
@@ -20,13 +19,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import timber.log.Timber
-import java.util.concurrent.TimeUnit.MINUTES
 
 /**
  * Created by premnirmal on 2/28/16.
  */
 class StocksProvider constructor(
-    private val context: Context,
     private val api: StocksApi,
     private val preferences: SharedPreferences,
     private val clock: AppClock,
@@ -41,11 +38,7 @@ class StocksProvider constructor(
     companion object {
         private const val LAST_FETCHED = "LAST_FETCHED"
         private const val NEXT_FETCH = "NEXT_FETCH"
-        private const val CONSECUTIVE_FETCH_FAILURES = "CONSECUTIVE_FETCH_FAILURES"
-        private const val MIN_SCHEDULE_MS = 15_000L
-        private const val MAX_FAILURE_BACKOFF_MS = 30 * 60 * 1000L
         private val DEFAULT_STOCKS = arrayOf("sh000001", "sz399001")
-        const val DEFAULT_INTERVAL_MS: Long = 15_000L
     }
 
     override val tickers: StateFlow<List<String>>
@@ -111,80 +104,8 @@ class StocksProvider constructor(
         storage.saveTickers(tickerSet)
     }
 
-    override fun scheduleUpdate(reason: String) {
-        val msToNextAlarm = alarmScheduler.msToNextAlarm(lastFetched)
-        scheduleUpdateWithMs(msToNextAlarm, reason)
-    }
-
-    private fun scheduleUpdateWithMs(
-        msToNextAlarm: Long,
-        reason: String
-    ) {
-        val clampedDelayMs = msToNextAlarm.coerceAtLeast(MIN_SCHEDULE_MS)
-        val updateTime = alarmScheduler.scheduleUpdate(clampedDelayMs, context)
-        _nextFetch.value = updateTime.toInstant().toEpochMilli()
-        preferences.edit {
-            putLong(NEXT_FETCH, updateTime.toInstant().toEpochMilli())
-        }
-        Timber.d(
-            "Scheduled next refresh reason=%s delayMs=%d at=%s",
-            reason,
-            clampedDelayMs,
-            updateTime.toInstant()
-        )
-        logFetchEvent(
-            event = "schedule_next",
-            detail = "reason=$reason delayMs=$clampedDelayMs nextAt=${updateTime.toInstant()}"
-        )
-        appPreferences.setRefreshing(false)
-    }
-
     private fun logFetchEvent(event: String, detail: String) =
         fetchEventLogger.log(source = "StocksProvider", event = event, detail = detail)
-
-    private fun resetConsecutiveFailures() {
-        preferences.edit { putInt(CONSECUTIVE_FETCH_FAILURES, 0) }
-    }
-
-    private fun incrementConsecutiveFailures(): Int {
-        val nextValue = preferences.getInt(CONSECUTIVE_FETCH_FAILURES, 0) + 1
-        preferences.edit { putInt(CONSECUTIVE_FETCH_FAILURES, nextValue) }
-        return nextValue
-    }
-
-    private fun scheduleFailureBackoff(reason: String, error: Throwable?) {
-        val failureCount = incrementConsecutiveFailures()
-        val exponent = (failureCount - 1).coerceAtMost(10)
-        val backoffMs = (MINUTES.toMillis(1) * (1L shl exponent)).coerceAtMost(MAX_FAILURE_BACKOFF_MS)
-        val regularScheduleMs = alarmScheduler.msToNextAlarm(lastFetched)
-        val retryDelayMs = minOf(regularScheduleMs, backoffMs)
-        val scheduleReason = "failure_backoff($failureCount):$reason"
-        if (error != null) {
-            Timber.w(
-                error,
-                "Fetch failed reason=%s failures=%d backoffMs=%d regularMs=%d chosenMs=%d",
-                reason,
-                failureCount,
-                backoffMs,
-                regularScheduleMs,
-                retryDelayMs
-            )
-        } else {
-            Timber.w(
-                "Fetch failed reason=%s failures=%d backoffMs=%d regularMs=%d chosenMs=%d",
-                reason,
-                failureCount,
-                backoffMs,
-                regularScheduleMs,
-                retryDelayMs
-            )
-        }
-        logFetchEvent(
-            event = "failure_backoff",
-            detail = "reason=$reason failures=$failureCount backoffMs=$backoffMs regularMs=$regularScheduleMs chosenMs=$retryDelayMs"
-        )
-        scheduleUpdateWithMs(retryDelayMs, scheduleReason)
-    }
 
     private suspend fun fetchStockInternal(ticker: String, allowCache: Boolean): FetchResult<Quote> = withContext(
         Dispatchers.IO
@@ -228,7 +149,6 @@ class StocksProvider constructor(
             Timber.d("No tickers/symbols to fetch")
             FetchResult.failure<List<Quote>>(FetchException("No symbols in portfolio"))
         } else {
-            var shouldScheduleInFinally = allowScheduling
             var failureReason = "unknown"
             var failureError: Throwable? = null
             return@withContext try {
@@ -261,9 +181,6 @@ class StocksProvider constructor(
                         lastFetched = clock.currentTimeMillis()
                         _fetchState.emit(FetchState.Success(lastFetched))
                         saveLastFetched(lastFetched)
-                        resetConsecutiveFailures()
-                        scheduleUpdate(reason = "fetch_success")
-                        shouldScheduleInFinally = false
                     }
                     appPreferences.setRefreshing(false)
                     widgetDataProvider.broadcastUpdateAllWidgets()
@@ -275,7 +192,6 @@ class StocksProvider constructor(
                     FetchResult.success(quoteMap.values.filter { tickerSet.contains(it.symbol) }.toList())
                 }
             } catch (ex: CancellationException) {
-                shouldScheduleInFinally = false
                 failureReason = "cancelled"
                 failureError = ex
                 FetchResult.failure<List<Quote>>(FetchException("Failed to fetch", ex))
@@ -286,14 +202,11 @@ class StocksProvider constructor(
                 FetchResult.failure<List<Quote>>(FetchException("Failed to fetch", ex))
             } finally {
                 appPreferences.setRefreshing(false)
-                if (shouldScheduleInFinally) {
-                    // Keep scheduling chain alive across transient failures.
+                if (failureError != null || failureReason != "unknown") {
                     logFetchEvent(
                         event = "fetch_failure",
                         detail = "reason=$failureReason error=${failureError?.message.orEmpty()}"
                     )
-                    runCatching { scheduleFailureBackoff(failureReason, failureError) }
-                        .onFailure { Timber.w(it, "Failed scheduling after fetch failure") }
                 }
             }
         }
@@ -301,8 +214,12 @@ class StocksProvider constructor(
 
     override fun schedule() {
         coroutineScope.launch {
-            scheduleUpdate()
-            alarmScheduler.enqueuePeriodicRefresh()
+            // The widget auto-refresh is a user toggle running fixed 15-minute periodic WorkManager
+            // work; the in-app home refresh loop is driven by HomeViewModel using the update-interval
+            // setting. No AlarmManager scheduling chain is used anymore.
+            if (appPreferences.widgetAutoRefresh) {
+                alarmScheduler.enqueuePeriodicRefresh()
+            }
             alarmScheduler.enqueuePeriodicCleanup()
         }
     }
@@ -356,6 +273,31 @@ class StocksProvider constructor(
         _tickers.emit(tickerSet.toList())
         saveTickers()
         val holding = Holding(ticker, shares, price)
+        position.add(holding)
+        quote?.position = position
+        val id = storage.addHolding(holding)
+        holding.id = id
+        _portfolio.emit(quoteMap.values.filter { tickerSet.contains(it.symbol) }.toList())
+        return holding
+    }
+
+    override suspend fun addSellHolding(
+        ticker: String,
+        shares: Float,
+        price: Float
+    ): Holding {
+        val quote: Quote?
+        var position: Position
+        synchronized(quoteMap) {
+            quote = quoteMap[ticker] ?: Quote(symbol = ticker).also { quoteMap[ticker] = it }
+            position = getPosition(ticker) ?: Position(ticker)
+            if (!tickerSet.contains(ticker)) {
+                tickerSet.add(ticker)
+            }
+        }
+        _tickers.emit(tickerSet.toList())
+        saveTickers()
+        val holding = Holding(ticker, shares, price, type = com.github.premnirmal.ticker.network.data.HOLDING_TYPE_SELL)
         position.add(holding)
         quote?.position = position
         val id = storage.addHolding(holding)

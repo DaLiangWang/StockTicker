@@ -46,7 +46,8 @@ class StocksStorage(
                         holdingTable.quoteSymbol,
                         holdingTable.shares,
                         holdingTable.price,
-                        holdingTable.id!!
+                        holdingTable.id!!,
+                        holdingTable.type
                     )
                 }
                 quote.position = Position(quote.symbol, holdings.toMutableList())
@@ -66,7 +67,8 @@ class StocksStorage(
                         holdingTable.quoteSymbol,
                         holdingTable.shares,
                         holdingTable.price,
-                        holdingTable.id!!
+                        holdingTable.id!!,
+                        holdingTable.type
                     )
                 }
                 quote.position = Position(quote.symbol, holdings.toMutableList())
@@ -108,7 +110,7 @@ class StocksStorage(
         ticker: String,
         holding: Holding
     ) {
-        quoteDao.deleteHolding(HoldingRow(holding.id, ticker, holding.shares, holding.price))
+        quoteDao.deleteHolding(HoldingRow(holding.id, ticker, holding.shares, holding.price, holding.type))
     }
 
     override suspend fun saveQuoteProperties(
@@ -159,12 +161,12 @@ class StocksStorage(
 
     private fun Position.toHoldingRows(): List<HoldingRow> {
         return this.holdings.map {
-            HoldingRow(it.id, this.symbol, it.shares, it.price)
+            HoldingRow(it.id, this.symbol, it.shares, it.price, it.type)
         }
     }
 
     private fun Holding.toHoldingRow(): HoldingRow {
-        return HoldingRow(this.id, this.symbol, this.shares, this.price)
+        return HoldingRow(this.id, this.symbol, this.shares, this.price, this.type)
     }
 
     private fun QuoteRow.toQuote(): Quote {

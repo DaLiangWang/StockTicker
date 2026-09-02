@@ -23,7 +23,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
-import java.time.ZonedDateTime
 
 /**
  * Unit tests for the Android [StocksProvider] implementation of [IStocksProvider]. The provider is
@@ -56,8 +55,6 @@ class StocksProviderTest : BaseUnitTest() {
         preferences = ApplicationProvider.getApplicationContext<Context>()
             .getSharedPreferences("StocksProviderTest", Context.MODE_PRIVATE)
         whenever(clock.currentTimeMillis()).thenReturn(NOW)
-        whenever(alarmScheduler.msToNextAlarm(any())).thenReturn(MINUTE_MS)
-        whenever(alarmScheduler.scheduleUpdate(any(), any())).thenReturn(ZonedDateTime.now())
     }
 
     @After fun clear() {
@@ -74,7 +71,6 @@ class StocksProviderTest : BaseUnitTest() {
         // so each test starts from a deterministic state.
         preferences.edit().putLong("LAST_FETCHED", NOW - MINUTE_MS).commit()
         return StocksProvider(
-            context,
             api,
             preferences,
             clock,
