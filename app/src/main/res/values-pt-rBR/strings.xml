@@ -4,8 +4,6 @@
   <string name="add_to_portfolio">Adicionar ou remover do portfólio</string>
   <string name="widget_label">Stocks Widget</string>
   <string name="action_add">Adicionar</string>
-  <string name="action_export">Exportar Cotações</string>
-  <string name="action_share">Compartilhar Portfólio</string>
   <string name="privacy_policy">Política de Privacidade</string>
   <string name="export_desc">Exportar seu portfólio para um arquivo .json</string>
   <string name="action_import">Importar Cotações</string>
@@ -52,12 +50,8 @@
   <string name="theme_updated_message">Tema do aplicativo atualizado</string>
   <string name="days_updated_message">Atualização dos dias modificada</string>
   <string name="days_updated_error_message">Erro - voce deve selecionar os dias</string>
-  <string name="error_exporting">Erro ao exportar arquivo</string>
   <string name="error_symbol">Símbolo Inválido</string>
-  <string name="error_sharing">Erro ao compartilhar cotações</string>
   <string name="error_fetching_stock">Erro ao buscar ação</string>
-  <string name="ticker_import_success">Cotações importadas com sucess</string>
-  <string name="ticker_import_fail">Erro ao importar cotações</string>
   <string name="no_network_message">Sem conexão de rede</string>
   <string name="refresh_failed">Falha ao atualizar</string>
   <string name="news_fetch_failed">Falha ao buscar notícias</string>
@@ -69,7 +63,6 @@
   <string name="end_time_updated">Fim da atualização</string>
   <string name="start_time_updated">Início da atualização</string>
   <string name="incorrect_time_update_error">Tempo de início não deve ser igual ao tempo de término</string>
-  <string name="share_email_subject">Aqui estão meu tickers Eu criei através do aplicativo StocksWidget - https://play.google.com/store/apps/details?id=com.github.premnirmal.tickerwidget \n\nVoce pode importar esse ticker com o mesmo aplicativo na opção \"configurações\" e escolher \"Importar\"</string>
   <string name="my_stock_portfolio">Meu Portfolio</string>
   <string name="number_of_shares">Núm. de ações</string>
   <string name="shares">Ações</string>
@@ -114,13 +107,10 @@
   <string name="add_positions_prompt">Voce deseja adicionar sua posição em %1$s?</string>
   <string name="already_in_portfolio">%1$s já está no seu portfolio</string>
   <string name="added_to_list">%1$s adicionada no seu portfolio</string>
-  <string name="next_fetch">Próxima consulta: %1$s</string>
   <string name="last_fetch">Última consulta: %1$s</string>
-  <string name="last_and_next_fetch">Última consulta: %1$s\nPróxima consulta: %2$s</string>
   <string name="cannot_export_msg">Não é possível exportar as notas sem a permissão de escrita para o dispositivo de armazenamento</string>
   <string name="cannot_import_msg">Não é possível importar as notas sem a permissão de leitura do dispositivo de armazenamento</string>
   <string name="cannot_share_msg">Não é possível compartilhar as notas das ações sem a permissão de escrita para o dispositivo de armazenamento</string>
-  <string name="exported_to">Exportado com successo</string>
   <string name="whats_new">Novidades</string>
   <string name="whats_new_in">Novidades da v%1$s</string>
   <string name="enter_a_symbol">Insira uma sigla</string>

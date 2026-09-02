@@ -77,6 +77,11 @@ class FakeStocksProvider(
         return holding
     }
 
+    override suspend fun setHolding(ticker: String, shares: Float, price: Float): Holding {
+        quotesBySymbol[ticker]?.position?.holdings?.clear()
+        return addHolding(ticker, shares, price)
+    }
+
     override suspend fun removePosition(ticker: String, holding: Holding): Boolean {
         return quotesBySymbol[ticker]?.position?.remove(holding) ?: false
     }

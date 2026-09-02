@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
 
-  <string name="widget_label">股票部件</string>
+  <string name="widget_label">股票组件</string>
 
   <string name="portfolio">股票组合</string>
   <string name="add_to_portfolio">添加或移出组合</string>
@@ -10,27 +10,25 @@
   <string name="feature_request">功能建议</string>
   <string name="feature_request_desc">提交新功能建议</string>
   <string name="action_add">添加</string>
-  <string name="action_export">导出行情</string>
-  <string name="action_share">分享组合</string>
   <string name="privacy_policy">隐私政策</string>
   <string name="export_desc">将你的组合导出为 .json 文件</string>
   <string name="action_import">导入行情</string>
   <string name="import_desc">从逗号分隔的 .txt 文件、.csv 文件或 .json 文件导入行情</string>
-  <string name="action_portfolio">自选股</string>
-  <string name="action_widgets">桌面部件</string>
+  <string name="action_portfolio">首页</string>
+  <string name="action_widgets">桌面组件</string>
   <string name="action_search">搜索</string>
   <string name="action_feed">热门</string>
   <string name="action_settings">设置</string>
   <string name="app_settings">设置</string>
   <string name="news_feed">资讯</string>
   <string name="trending_stocks">热门股票</string>
-  <string name="action_Settings">部件设置</string>
+  <string name="action_Settings">组件设置</string>
   <string name="action_rearrage">调整股票顺序</string>
   <string name="action_update">立即刷新</string>
   <string name="are_you_sure">确定吗？</string>
   <string name="add_ticker">添加代码</string>
-  <string name="bg">部件背景</string>
-  <string name="layout_type">部件类型</string>
+  <string name="bg">组件背景</string>
+  <string name="layout_type">组件类型</string>
   <string name="widget_width">列数</string>
   <string name="text_color">文字颜色</string>
   <string name="start_time">开始时间</string>
@@ -44,34 +42,30 @@
   <string name="notification_alerts_desc">接收通知提醒</string>
   <string name="notification_alerts_required_message">应用需要通知权限才能接收提醒通知。</string>
   <string name="show_refresh">显示刷新图标</string>
-  <string name="show_refresh_desc">在部件中显示刷新图标（受 Android 系统省电策略影响，可能不准时）</string>
+  <string name="show_refresh_desc">在组件中显示刷新图标（受 Android 系统省电策略影响，可能不准时）</string>
   <string name="auto_sort">自动排序</string>
   <string name="auto_sort_desc">股票将按涨跌幅排序。</string>
-  <string name="hide_header">隐藏部件标题栏</string>
+  <string name="hide_header">隐藏组件标题栏</string>
   <string name="hide_header_desc">获取时间和刷新按钮。</string>
   <string name="refresh_on_screen_unlock">解锁时刷新</string>
   <string name="refresh_on_screen_unlock_desc">屏幕解锁时刷新（仅在设定的时间段内）。</string>
   <string name="bold_change">加粗文字</string>
   <string name="bold_change_desc">以粗体显示涨跌和市值</string>
   <string name="setting_currency">显示货币</string>
-  <string name="setting_currency_desc">在部件中显示货币符号</string>
-  <string name="choose_text_size">部件文字大小（即将移除）</string>
-  <string name="app_theme">应用和部件主题</string>
+  <string name="setting_currency_desc">在组件中显示货币符号</string>
+  <string name="choose_text_size">组件文字大小（即将移除）</string>
+  <string name="app_theme">应用和组件主题</string>
   <string name="text_size_updated_message">文字大小已更新</string>
   <string name="bg_updated_message">背景已更新</string>
   <string name="layout_updated_message">布局类型已更新</string>
-  <string name="widget_width_updated_message">部件尺寸已更新</string>
+  <string name="widget_width_updated_message">组件尺寸已更新</string>
   <string name="text_color_updated_message">文字颜色已更新</string>
   <string name="refresh_updated_message">刷新间隔已更新</string>
   <string name="theme_updated_message">应用主题已更新</string>
   <string name="days_updated_message">更新日已更新</string>
   <string name="days_updated_error_message">错误 - 你必须选择日期</string>
-  <string name="error_exporting">导出文件失败</string>
   <string name="error_symbol">无效的代码</string>
-  <string name="error_sharing">分享行情失败</string>
   <string name="error_fetching_stock">获取股票失败</string>
-  <string name="ticker_import_success">行情导入成功</string>
-  <string name="ticker_import_fail">导入行情失败</string>
   <string name="no_network_message">无网络连接</string>
   <string name="refresh_failed">刷新失败</string>
   <string name="news_fetch_failed">获取资讯失败</string>
@@ -82,7 +76,6 @@
   <string name="end_time_updated">结束时间已更新</string>
   <string name="start_time_updated">开始时间已更新</string>
   <string name="incorrect_time_update_error">开始时间不能等于结束时间</string>
-  <string name="share_email_subject">这些是我用 StocksWidget 创建的代码 - https://play.google.com/store/apps/details?id=com.github.premnirmal.tickerwidget \n\n你可以在应用设置中选择"导入"来导入这些代码</string>
   <string name="my_stock_portfolio">我的股票组合</string>
   <string name="number_of_shares">持股数量</string>
   <string name="shares">股数</string>
@@ -96,9 +89,9 @@
   <string name="edit_position">持仓</string>
   <string name="no_such_stock_in_portfolio">你的组合中没有这只股票。</string>
   <string name="remove">移除</string>
-  <string name="move_to_different_widget">移动到其他部件</string>
-  <string name="select_widget">选择部件</string>
-  <string name="change_instructions">在部件上，点击涨跌可在涨跌幅和涨跌额之间切换</string>
+  <string name="move_to_different_widget">移动到其他组件</string>
+  <string name="select_widget">选择组件</string>
+  <string name="change_instructions">在组件上，点击涨跌可在涨跌幅和涨跌额之间切换</string>
   <string name="no_symbols_in_portfolio">组合中还没有任何代码。</string>
   <string name="like_our_app">喜欢我们的应用吗？</string>
   <string name="please_rate">请在应用商店给我们评分，我们非常期待你的反馈！</string>
@@ -127,21 +120,18 @@
   <string name="add_positions_prompt">要为 %1$s 添加持仓吗？</string>
   <string name="already_in_portfolio">%1$s 已在你的组合中</string>
   <string name="added_to_list">%1$s 已添加到组合</string>
-  <string name="next_fetch">下次更新：%1$s</string>
   <string name="last_fetch">上次更新：%1$s</string>
-  <string name="last_and_next_fetch">上次更新：%1$s\n下次更新：%2$s</string>
   <string name="total_holdings">总市值：%1$s</string>
   <string name="cannot_export_msg">没有写入外部存储权限，无法导出行情</string>
   <string name="cannot_import_msg">没有读取外部存储权限，无法导入行情</string>
   <string name="cannot_share_msg">没有写入外部存储权限，无法分享行情</string>
-  <string name="exported_to">导出成功</string>
   <string name="whats_new">最新变化</string>
   <string name="whats_new_in">v%1$s 更新内容</string>
   <string name="enter_a_symbol">输入代码</string>
   <string name="no_symbols">¯\\_(ツ)_/¯\n暂无代码</string>
   <string name="error_fetching_news">¯\\_(ツ)_/¯\n获取资讯失败</string>
-  <string name="widget_name">部件名称</string>
-  <string name="widget_name_updated">部件名称已更新</string>
+  <string name="widget_name">组件名称</string>
+  <string name="widget_name_updated">组件名称已更新</string>
   <string name="set">设置</string>
   <string name="current_positions">当前持仓</string>
   <string name="total">合计</string>
@@ -162,10 +152,10 @@
   <string name="one_year_short">1年</string>
   <string name="five_years_short">5年</string>
   <string name="error_loading_graph">加载图表失败</string>
-  <string name="widgets">桌面部件</string>
+  <string name="widgets">桌面组件</string>
   <string name="tutorial">新手引导</string>
-  <string name="how_to_title">如何添加桌面部件</string>
-  <string name="how_to">- 长按主屏幕空白处唤出菜单\n- 选择"小部件"选项。\n- 从列表中选择"Stocks Widget"。\n- 在打开的设置页面编辑部件。\n- 你可以添加多个部件，每个部件都有自己独立的组合。</string>
+  <string name="how_to_title">如何添加桌面组件</string>
+  <string name="how_to">- 长按主屏幕空白处唤出菜单\n- 选择"小组件"选项。\n- 从列表中选择"Stocks Widget"。\n- 在打开的设置页面编辑组件。\n- 你可以添加多个组件，每个组件都有自己独立的组合。</string>
   <string name="db_viewer">应用数据库</string>
   <string name="discovered_db">你发现了进入数据库查看器的秘密入口</string>
   <string name="db_tap_count">再点击 %1$d 次解锁数据库查看器</string>
@@ -189,7 +179,7 @@
   <string name="save">保存</string>
   <string name="desc_channel_alerts">股价提醒</string>
   <string name="desc_channel_summary">每日汇总</string>
-  <string name="notification_summary_title">你的自选股今天表现如何？</string>
+  <string name="notification_summary_title">你的首页今天表现如何？</string>
   <string name="dividend">股息</string>
   <string name="error">错误</string>
   <string name="error_fetching_whats_new">获取更新内容失败</string>
@@ -220,7 +210,7 @@
   <string name="quote_change_percent_pos">+%1$.2f%%</string>
   <string name="quote_change_percent_neg">%1$.2f%%</string>
 
-  <string name="exact_alarm_permission_required_message">需要精确闹钟权限才能按时刷新部件。</string>
+  <string name="exact_alarm_permission_required_message">需要精确闹钟权限才能按时刷新组件。</string>
   <string name="go_to_settings">授权</string>
 
   <!-- 组合盈亏 -->
@@ -235,27 +225,25 @@
   <!-- 持仓导入 -->
   <string name="action_import_positions">导入持仓</string>
   <string name="import_positions_desc">粘贴 CSV（代码,市场,名称,数量,成本价[,币种,备注]），每行一条</string>
-  <string name="import_positions_template">复制 CSV 模板</string>
-  <string name="positions_import_template_copied">CSV 模板已复制到剪贴板</string>
   <string name="positions_import_success">持仓导入成功，共 %1$d 条</string>
   <string name="positions_import_fail">导入持仓失败，请检查文件格式</string>
   <string name="positions_import_empty">文件中没有解析到有效的持仓数据</string>
   <string name="import_positions_format_hint">支持格式（每行一条，逗号或制表符分隔）：\n代码,股数,成本价\n例如：\nsh600519,100,1650.00\nAAPL,10,180.50\n\n股数与成本价可留空，仅导入代码。第一行为标题时会自动跳过。</string>
 
-  <!-- 部件盈亏监控 -->
+  <!-- 组件盈亏监控 -->
   <string name="widget_show_market_value">显示当前市值</string>
-  <string name="widget_show_market_value_desc">在部件顶部显示组合当前市值</string>
+  <string name="widget_show_market_value_desc">在组件顶部显示组合当前市值</string>
   <string name="widget_show_today_gain_loss">显示今日盈亏</string>
-  <string name="widget_show_today_gain_loss_desc">在部件顶部显示组合今日盈亏</string>
+  <string name="widget_show_today_gain_loss_desc">在组件顶部显示组合今日盈亏</string>
   <string name="widget_show_total_gain_loss">显示累计盈亏</string>
-  <string name="widget_show_total_gain_loss_desc">在部件顶部显示组合累计盈亏</string>
+  <string name="widget_show_total_gain_loss_desc">在组件顶部显示组合累计盈亏</string>
 
   <!-- 数据源 -->
   <string name="a_share_data_source">A 股数据源</string>
   <string name="a_share_data_source_desc">A 股行情的获取来源</string>
 
   <!-- 原先硬编码在代码中的文案 -->
-  <string name="widget_default_name">部件 %1$d</string>
+  <string name="widget_default_name">组件 %1$d</string>
   <string name="widget_title_today">今日</string>
   <string name="widget_title_total">累计</string>
   <string name="widget_title_market_value">总资产</string>

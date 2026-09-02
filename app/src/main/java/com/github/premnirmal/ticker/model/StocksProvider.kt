@@ -364,6 +364,19 @@ class StocksProvider constructor(
         return holding
     }
 
+    override suspend fun setHolding(
+        ticker: String,
+        shares: Float,
+        price: Float
+    ): Holding {
+        // Drop whatever was held before so the import is authoritative. toList() snapshots the
+        // holdings because removePosition mutates the very list being iterated.
+        for (holding in getPosition(ticker)?.holdings?.toList().orEmpty()) {
+            removePosition(ticker, holding)
+        }
+        return addHolding(ticker, shares, price)
+    }
+
     override suspend fun removePosition(
         ticker: String,
         holding: Holding

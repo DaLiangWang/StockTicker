@@ -66,6 +66,17 @@ interface IStocksProvider {
   /** Adds a holding ([shares] at [price]) to [ticker], returning the created [Holding]. */
   suspend fun addHolding(ticker: String, shares: Float, price: Float): Holding
 
+  /**
+   * Replaces everything currently held for [ticker] with a single holding of [shares] at [price],
+   * returning the new [Holding].
+   *
+   * Unlike [addHolding] — which accumulates, and is what the holdings editor wants because every
+   * entry there is a separate purchase — this is authoritative: an import mirrors the broker's
+   * current state, so importing the same symbol again must overwrite the previous figures rather
+   * than add to them.
+   */
+  suspend fun setHolding(ticker: String, shares: Float, price: Float): Holding
+
   /** Removes [holding] from [ticker], returning whether it was removed. */
   suspend fun removePosition(ticker: String, holding: Holding): Boolean
 

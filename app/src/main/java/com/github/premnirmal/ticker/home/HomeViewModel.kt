@@ -10,7 +10,6 @@ import com.github.premnirmal.ticker.model.AlarmScheduler
 import com.github.premnirmal.ticker.model.FetchState
 import com.github.premnirmal.ticker.model.PortfolioSummary
 import com.github.premnirmal.ticker.model.StocksProvider
-import com.github.premnirmal.ticker.model.formatFetchTime
 import com.github.premnirmal.ticker.network.TrendingProvider
 import com.github.premnirmal.ticker.widget.WidgetData
 import com.github.premnirmal.ticker.widget.WidgetDataProvider
@@ -35,8 +34,6 @@ class HomeViewModel constructor(
 
     val fetchState: StateFlow<FetchState>
         get() = stocksProvider.fetchState
-    val nextFetch: Flow<String>
-        get() = stocksProvider.nextFetchMs.map { formatFetchTime(it) }
 
     val isRefreshing: StateFlow<Boolean>
         get() = _isRefreshing

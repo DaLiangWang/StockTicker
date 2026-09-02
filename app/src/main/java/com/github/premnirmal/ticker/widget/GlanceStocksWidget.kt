@@ -73,6 +73,11 @@ private const val SUMMARY_VALUE_FONT_SIZE = 20f
 /** Smaller size for the header clock, which only shows `HH:mm:ss`. */
 private const val HEADER_TIME_FONT_SIZE = 10f
 
+/** Identifiers for the three optional portfolio summary columns, in display order. */
+private const val COLUMN_TODAY = 0
+private const val COLUMN_TOTAL = 1
+private const val COLUMN_MARKET_VALUE = 2
+
 class GlanceStocksWidget : GlanceAppWidget(), KoinComponent {
 
     private val stocksProvider: StocksProvider by inject()
@@ -139,9 +144,13 @@ fun GlanceWidget(
         modifier = GlanceModifier.fillMaxSize()
             // Transparent so the launcher wallpaper shows through — the widget no longer paints its
             // own card background.
-            .background(ColorProvider(R.color.widget_bg_transparent))
-            // Tapping anywhere on the widget opens the watchlist.
-            .clickable(actionStartActivity<HomeActivity>())
+            // Backed by the user's background preference (transparent / translucent / solid, each
+            // with a dark-mode variant). Note this takes a drawable resource, not a colour: the
+            // card backgrounds carry rounded corners that a flat colour cannot express.
+            .background(ImageProvider(widgetData.backgroundResource))
+            // Tapping anywhere on the widget refreshes it. The widget is a read-only view, so it
+            // deliberately does not launch the app.
+            .clickable(actionRunCallback<RefreshCallback>())
             .padding(6.dp)
     ) {
         Column(
@@ -186,50 +195,73 @@ private fun ColumnScope.PortfolioSummaryRow(
         return
     }
 
-    // Three columns — 今日 (left) / 累计 (centre) / 总资产 (right). They share one horizontal
-    // row so each column's three lines stay glued together.
+    // The three columns are individually toggleable (今日 / 累计 / 总资产), so each is gated by its
+    // own preference and the alignment follows whichever columns remain visible — otherwise turning
+    // one off would leave a gap where it used to sit.
+    val shownColumns = buildList {
+        if (widgetData.showTodayGainLoss) add(COLUMN_TODAY)
+        if (widgetData.showTotalGainLoss) add(COLUMN_TOTAL)
+        if (widgetData.showMarketValue) add(COLUMN_MARKET_VALUE)
+    }
+
+    fun alignOf(column: Int): TextAlign {
+        val position = shownColumns.indexOf(column)
+        return when {
+            shownColumns.size == 1 -> TextAlign.Center
+            position == 0 -> TextAlign.Start
+            position == shownColumns.size - 1 -> TextAlign.End
+            else -> TextAlign.Center
+        }
+    }
+
     Row(
         modifier = GlanceModifier.defaultWeight().fillMaxWidth().padding(bottom = 2.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        SummaryItem(
-            label = context.getString(R.string.widget_title_today),
-            value = summary.todayGainLossString(),
-            valueColor = ColorProvider(
-                widgetData.getChangeColor(summary.todayGainLoss, summary.todayGainLossPercent)
-            ),
-            subtitle = summary.todayGainLossPercentString(),
-            subtitleColor = ColorProvider(
-                widgetData.getChangeColor(summary.todayGainLoss, summary.todayGainLossPercent)
-            ),
-            fontSize = SUMMARY_VALUE_FONT_SIZE,
-            isBold = isBold,
-            textAlign = TextAlign.Start,
-        )
-        SummaryItem(
-            label = context.getString(R.string.widget_title_total),
-            value = summary.totalGainLossString(),
-            valueColor = ColorProvider(
-                widgetData.getChangeColor(summary.totalGainLoss, summary.totalGainLossPercent)
-            ),
-            subtitle = summary.totalGainLossPercentString(),
-            subtitleColor = ColorProvider(
-                widgetData.getChangeColor(summary.totalGainLoss, summary.totalGainLossPercent)
-            ),
-            fontSize = SUMMARY_VALUE_FONT_SIZE,
-            isBold = isBold,
-            textAlign = TextAlign.Center,
-        )
-        SummaryItem(
-            label = context.getString(R.string.widget_title_market_value),
-            value = summary.marketValueString(),
-            valueColor = textColor,
-            subtitle = context.getString(R.string.widget_currency_holdings, summary.positionCount),
-            subtitleColor = ColorProvider(R.color.text_widget_header),
-            fontSize = SUMMARY_VALUE_FONT_SIZE,
-            isBold = isBold,
-            textAlign = TextAlign.End,
-        )
+        if (widgetData.showTodayGainLoss) {
+            SummaryItem(
+                label = context.getString(R.string.widget_title_today),
+                value = summary.todayGainLossString(),
+                valueColor = ColorProvider(
+                    widgetData.getChangeColor(summary.todayGainLoss, summary.todayGainLossPercent)
+                ),
+                subtitle = summary.todayGainLossPercentString(),
+                subtitleColor = ColorProvider(
+                    widgetData.getChangeColor(summary.todayGainLoss, summary.todayGainLossPercent)
+                ),
+                fontSize = SUMMARY_VALUE_FONT_SIZE,
+                isBold = isBold,
+                textAlign = alignOf(COLUMN_TODAY),
+            )
+        }
+        if (widgetData.showTotalGainLoss) {
+            SummaryItem(
+                label = context.getString(R.string.widget_title_total),
+                value = summary.totalGainLossString(),
+                valueColor = ColorProvider(
+                    widgetData.getChangeColor(summary.totalGainLoss, summary.totalGainLossPercent)
+                ),
+                subtitle = summary.totalGainLossPercentString(),
+                subtitleColor = ColorProvider(
+                    widgetData.getChangeColor(summary.totalGainLoss, summary.totalGainLossPercent)
+                ),
+                fontSize = SUMMARY_VALUE_FONT_SIZE,
+                isBold = isBold,
+                textAlign = alignOf(COLUMN_TOTAL),
+            )
+        }
+        if (widgetData.showMarketValue) {
+            SummaryItem(
+                label = context.getString(R.string.widget_title_market_value),
+                value = summary.marketValueString(),
+                valueColor = textColor,
+                subtitle = context.getString(R.string.widget_currency_holdings, summary.positionCount),
+                subtitleColor = ColorProvider(R.color.text_widget_header),
+                fontSize = SUMMARY_VALUE_FONT_SIZE,
+                isBold = isBold,
+                textAlign = alignOf(COLUMN_MARKET_VALUE),
+            )
+        }
     }
 }
 
@@ -352,16 +384,9 @@ private fun MyPortfolio(
     val fontSize = WIDGET_FONT_SIZE
     val gainLossFormatted = stock.gainLossString()
     val gainLossPercentFormatted = stock.gainLossPercentString()
-    val priceFormatted = if (widgetData.showCurrency) {
-        stock.priceFormat.format(stock.lastTradePrice)
-    } else {
-        stock.priceString()
-    }
-    val holdingsFormatted = if (widgetData.showCurrency) {
-        stock.priceFormat.format(stock.holdings())
-    } else {
-        stock.holdingsString()
-    }
+    // The "show currency" preference was removed, so amounts are always currency-formatted.
+    val priceFormatted = stock.priceFormat.format(stock.lastTradePrice)
+    val holdingsFormatted = stock.priceFormat.format(stock.holdings())
     val displayName = stock.properties?.displayname.takeUnless { it.isNullOrBlank() } ?: stock.symbol
     val gainLoss = stock.gainLoss()
     val gainLossColor = ColorProvider(widgetData.getChangeColor(gainLoss, gainLoss))
@@ -445,7 +470,7 @@ private fun MyPortfolio(
 private fun WidgetSingleColumnPreview() {
     Box(modifier = GlanceModifier.background(color = MaterialTheme.colorScheme.inverseSurface).padding(20.dp)) {
         val data = previewDataState(
-            layoutType = IWidgetData.LayoutType.Fixed,
+            layoutType = IWidgetData.LayoutType.MyPortfolio,
         )
         GlanceWidget(
             widgetData = data,
@@ -466,7 +491,7 @@ private fun WidgetSingleColumnPreview() {
 private fun WidgetEmptyPreview() {
     Box(modifier = GlanceModifier.background(color = MaterialTheme.colorScheme.inverseSurface).padding(20.dp)) {
         val data = previewDataState(
-            layoutType = IWidgetData.LayoutType.Fixed,
+            layoutType = IWidgetData.LayoutType.MyPortfolio,
         )
         GlanceWidget(
             widgetData = data,
@@ -481,7 +506,7 @@ private fun WidgetEmptyPreview() {
 private fun WidgetFixedPreview() {
     Box(modifier = GlanceModifier.background(color = MaterialTheme.colorScheme.inverseSurface).padding(20.dp)) {
         val data = previewDataState(
-            layoutType = IWidgetData.LayoutType.Fixed,
+            layoutType = IWidgetData.LayoutType.MyPortfolio,
         )
         GlanceWidget(
             widgetData = data,
@@ -502,7 +527,7 @@ private fun WidgetFixedPreview() {
 private fun WidgetFixedTranslucentPreview() {
     Box(modifier = GlanceModifier.background(color = MaterialTheme.colorScheme.inverseSurface).padding(20.dp)) {
         val data = previewDataState(
-            layoutType = IWidgetData.LayoutType.Fixed,
+            layoutType = IWidgetData.LayoutType.MyPortfolio,
             backgroundResource = R.drawable.translucent_widget_bg,
         )
         GlanceWidget(
@@ -524,7 +549,7 @@ private fun WidgetFixedTranslucentPreview() {
 private fun WidgetAnimatedPreview() {
     Box(modifier = GlanceModifier.background(color = MaterialTheme.colorScheme.inverseSurface).padding(20.dp)) {
         val data = previewDataState(
-            layoutType = IWidgetData.LayoutType.Animated,
+            layoutType = IWidgetData.LayoutType.MyPortfolio,
         )
         GlanceWidget(
             widgetData = data,
@@ -545,7 +570,7 @@ private fun WidgetAnimatedPreview() {
 private fun WidgetTabsPreview() {
     Box(modifier = GlanceModifier.background(color = MaterialTheme.colorScheme.inverseSurface).padding(20.dp)) {
         val data = previewDataState(
-            layoutType = IWidgetData.LayoutType.Tabs,
+            layoutType = IWidgetData.LayoutType.MyPortfolio,
         )
         GlanceWidget(
             widgetData = data,
@@ -605,14 +630,12 @@ private fun fakePosition(symbol: String): Position {
 }
 
 private fun previewDataState(
-    layoutType: IWidgetData.LayoutType = IWidgetData.LayoutType.Fixed,
+    layoutType: IWidgetData.LayoutType = IWidgetData.LayoutType.MyPortfolio,
     backgroundResource: Int = R.drawable.app_widget_background,
 ): SerializableWidgetState = SerializableWidgetState(
     layoutType = SerializableLayoutType.from(layoutType),
-    showCurrency = false,
     boldText = false,
     changeType = SerializableChangeType.Percent,
-    sizePref = 0,
     fontSize = 12f,
     isDarkMode = false,
     hideWidgetHeader = false,

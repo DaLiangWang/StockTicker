@@ -4,8 +4,6 @@
   <string name="portfolio">Portfolio</string>
   <string name="add_to_portfolio">Zum Portfolio hinzufügen oder daraus entfernen</string>
   <string name="action_add">Hinzufügen</string>
-  <string name="action_export">Aktienliste Exportieren</string>
-  <string name="action_share">Portfolio teilen</string>
   <string name="privacy_policy">Datenschutz-Bestimmungen</string>
   <string name="export_desc">Aktienliste ihres Portfolios in eine .json-Datei exportieren.</string>
   <string name="action_import">Aktienliste Importieren</string>
@@ -56,12 +54,8 @@
   <string name="theme_updated_message">App-Theme aktualisiert</string>
   <string name="days_updated_message">Aktualisierungstage aktualisiert</string>
   <string name="days_updated_error_message">Fehler - Sie müssen den Tag auswählen.</string>
-  <string name="error_exporting">Fehler beim Exportieren der Datei</string>
   <string name="error_symbol">Ungültige Aktie</string>
-  <string name="error_sharing">Fehler beim Teilen der Aktienliste</string>
   <string name="error_fetching_stock">Fehler beim Abrufen der Aktie</string>
-  <string name="ticker_import_success">Aktienliste erfolgreich importiert</string>
-  <string name="ticker_import_fail">Fehler beim Importieren der Aktienliste</string>
   <string name="no_network_message">Keine Netzwerkverbindung</string>
   <string name="refresh_failed">Aktualisierung fehlgeschlagen</string>
   <string name="news_fetch_failed">Nachrichten konnten nicht abgerufen werden</string>
@@ -72,7 +66,6 @@
   <string name="end_time_updated">Endzeit aktualisiert</string>
   <string name="start_time_updated">Startzeit aktualisiert</string>
   <string name="incorrect_time_update_error">Die Startzeit darf nicht gleich der Endzeit sein.</string>
-  <string name="share_email_subject">Hier sind meine Ticker, die ich mit StocksWidget erstellt habe - https://play.google.com/store/apps/details?id=com.github.premnirmal.tickerwidget\n\nSie können diese Ticker mit der App importieren, indem Sie in die Einstellungen gehen und "Importieren" wählen.</string>
   <string name="my_stock_portfolio">Mein Aktienportfolio</string>
   <string name="number_of_shares">Anzahl der Aktien</string>
   <string name="shares">Aktien</string>
@@ -117,14 +110,11 @@
   <string name="add_positions_prompt">Möchten Sie Bestände für %1$s hinzufügen?</string>
   <string name="already_in_portfolio">%1$s ist bereits in Ihrem Portfolio</string>
   <string name="added_to_list">%1$s wurde Ihrem Portfolio hinzugefügt</string>
-  <string name="next_fetch">Nächster Abruf: %1$s</string>
   <string name="last_fetch">Letzter Abruf: %1$s</string>
-  <string name="last_and_next_fetch">Letzter Abruf: %1$s\nNächster Abruf: %2$s</string>
   <string name="total_holdings">Gesamtbestand: %1$s</string>
   <string name="cannot_export_msg">Aktienlisten können nicht ohne Berechtigung zum Schreiben in einen externen Speicher exportiert werden.</string>
   <string name="cannot_import_msg">Aktienlisten können nicht ohne Berechtigung zum Lesen des externen Speichers importiert werden.</string>
   <string name="cannot_share_msg">Aktienlisten können nicht ohne Berechtigung zum Schreiben in einen externen Speicher freigegeben werden.</string>
-  <string name="exported_to">Erfolgreich exportiert</string>
   <string name="whats_new">Was gibt\'s neues</string>
   <string name="whats_new_in">Was gibt\'s neues in v%1$s</string>
   <string name="enter_a_symbol">Geben Sie einen Aktiennamen ein</string>

@@ -98,7 +98,9 @@ class StocksProviderTest : BaseUnitTest() {
     @Test fun testDefaultStocksUsedWhenStorageEmpty() {
         val provider = createProvider(tickers = emptySet())
         assertTrue(provider.tickers.value.isNotEmpty())
-        assertTrue(provider.hasTicker("AAPL"))
+        // The defaults are A-share indices now that quotes come from the Chinese exchanges.
+        assertTrue(provider.hasTicker("sh000001"))
+        assertTrue(provider.hasTicker("sz399001"))
         verify(storage).saveTickers(provider.tickers.value.toSet())
     }
 
@@ -197,6 +199,24 @@ class StocksProviderTest : BaseUnitTest() {
             assertTrue(removed)
             assertFalse(provider.hasPosition("AAPL"))
             verify(storage).removeHolding("AAPL", holding)
+        }
+    }
+
+    @Test fun testSetHoldingReplacesExistingPosition() {
+        runBlocking {
+            whenever(storage.addHolding(any())).thenReturn(1L)
+            val provider = createProvider(tickers = setOf("AAPL"), quotes = listOf(Quote(symbol = "AAPL")))
+
+            provider.setHolding("AAPL", shares = 10f, price = 5f)
+            provider.setHolding("AAPL", shares = 20f, price = 8f)
+
+            val position = provider.getPosition("AAPL")
+            assertNotNull(position)
+            // The second import wins: the previous holding is dropped rather than added to, so the
+            // symbol ends up with the newly imported figures instead of the sum of both imports.
+            assertEquals(1, position!!.holdings.size)
+            assertEquals(20f, position.totalShares())
+            assertEquals(8f, position.averagePrice())
         }
     }
 

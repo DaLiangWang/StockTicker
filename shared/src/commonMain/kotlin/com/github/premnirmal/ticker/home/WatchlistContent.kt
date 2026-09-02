@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -76,9 +77,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.github.premnirmal.shared.resources.Res
+import com.github.premnirmal.shared.resources.market_value
+import com.github.premnirmal.shared.resources.today_gain_loss
+import com.github.premnirmal.shared.resources.total_gain_loss
+import com.github.premnirmal.ticker.model.PortfolioSummary
 import com.github.premnirmal.ticker.navigation.LocalContentBottomPadding
 import com.github.premnirmal.ticker.detail.QUOTE_TABLE_WIDTH
 import com.github.premnirmal.ticker.network.data.Quote
+import com.github.premnirmal.tickerwidget.ui.theme.SharedColours
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
@@ -106,14 +114,12 @@ import sh.calvin.reorderable.rememberReorderableLazyStaggeredGridState
 @Composable
 fun WatchlistContent(
     appName: String,
-    subtitle: String,
-    hasWidgets: Boolean,
     hasHoldings: Boolean,
     isRefreshing: Boolean,
     widgets: List<WatchlistWidget>,
     totalGainLoss: TotalGainLoss?,
     totalHoldingsIcon: Painter,
-    headerBackground: Painter?,
+    lastUpdated: String,
     onRefresh: () -> Unit,
     onQuoteClick: (Quote) -> Unit,
     quoteCard: @Composable (
@@ -125,110 +131,57 @@ fun WatchlistContent(
     totalHoldingsPopup: @Composable (totalHoldings: TotalGainLoss, onDismiss: () -> Unit) -> Unit,
     modifier: Modifier = Modifier,
     listFadingEdges: (ScrollableState) -> Modifier = { Modifier },
-    registerResetScroll: @Composable (reset: suspend () -> Unit) -> Unit = {},
     registerWidgetScroll: @Composable (index: Int, scroll: suspend () -> Unit) -> Unit = { _, _ -> },
 ) {
-    val density = LocalDensity.current
-    val headerHeightDp = remember(hasWidgets) { if (hasWidgets) 200.dp else 160.dp }
-    val headerHeight = remember(hasWidgets, headerHeightDp) {
-        with(density) {
-            headerHeightDp.roundToPx()
-        }
-    }
-    val connection = rememberSaveable(saver = CollapsingTopBarScrollConnection.saver(headerHeight)) {
-        CollapsingTopBarScrollConnection(
-            appBarMaxHeight = headerHeight,
-        )
-    }
-    val spaceHeight by remember(density, headerHeight) {
-        derivedStateOf {
-            with(density) {
-                (headerHeight + connection.appBarOffset).toDp()
-            }
-        }
-    }
     var showTotalHoldingsPopup by remember {
         mutableStateOf(false)
     }
-    registerResetScroll {
-        connection.resetOffset()
-    }
-    BoxWithConstraints(modifier = Modifier.nestedScroll(connection)) {
-        val constraints = this.constraints
-        val rowState = rememberLazyListState()
-        val coroutineScope = rememberCoroutineScope()
-        val hapticFeedback = LocalHapticFeedback.current
-        val windowInfo = LocalWindowInfo.current
-        val gridSize = remember(windowInfo.containerSize, constraints.maxWidth, constraints.maxHeight) {
-            // Cap the grid to the window when its size is known, but fall back to the available
-            // layout constraints when the window size is reported as zero. On iOS the window's
-            // containerSize is momentarily 0 after the app is backgrounded and reopened, and taking
-            // min(..., 0) would size the grid to 0 width and leave the watchlist entirely blank.
-            val containerWidth = windowInfo.containerSize.width
-            val containerHeight = windowInfo.containerSize.height
-            val effectiveWidth =
-                if (containerWidth > 0) min(constraints.maxWidth, containerWidth) else constraints.maxWidth
-            val effectiveHeight =
-                if (containerHeight > 0) containerHeight else constraints.maxHeight
-            val widthDp = with(density) { effectiveWidth.toDp() }
-            val heightDp = with(density) { effectiveHeight.toDp() }
-            DpSize(widthDp, heightDp)
-        }
-        val selectedItemIndex by remember {
-            derivedStateOf {
-                val layoutInfo = rowState.layoutInfo
-                val visibleItems = layoutInfo.visibleItemsInfo
-                val viewportCenter = (layoutInfo.viewportStartOffset + layoutInfo.viewportEndOffset) / 2
-                visibleItems.minByOrNull { abs((it.offset + it.size / 2) - viewportCenter) }?.index ?: 0
-            }
-        }
-        Header(
-            modifier = Modifier
-                .heightIn(max = headerHeightDp)
-                .offset { IntOffset(0, (connection.appBarOffset * 0.5).toInt()) },
-            hasWidgets = hasWidgets,
-            subtitle = subtitle,
-            widgets = widgets,
-            selectedItemIndex = selectedItemIndex,
-            coroutineScope = coroutineScope,
-            rowState = rowState,
-            headerBackground = headerBackground,
+    Column(modifier = modifier.fillMaxSize()) {
+        TopAppBar(
+            appName = appName,
+            hasHoldings = hasHoldings,
+            totalHoldingsIcon = totalHoldingsIcon,
+            onTotalHoldingsClick = { showTotalHoldingsPopup = true },
         )
-        Column(
-            modifier = modifier.fillMaxSize()
-        ) {
-            Spacer(
-                Modifier.height(spaceHeight)
-            )
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val constraints = this.constraints
+            val rowState = rememberLazyListState()
+            val hapticFeedback = LocalHapticFeedback.current
+            val windowInfo = LocalWindowInfo.current
+            val density = LocalDensity.current
+            val gridSize = remember(windowInfo.containerSize, constraints.maxWidth, constraints.maxHeight) {
+                // Cap the grid to the window when its size is known, but fall back to the available
+                // layout constraints when the window size is reported as zero. On iOS the window's
+                // containerSize is momentarily 0 after the app is backgrounded and reopened, and taking
+                // min(..., 0) would size the grid to 0 width and leave the watchlist entirely blank.
+                val containerWidth = windowInfo.containerSize.width
+                val containerHeight = windowInfo.containerSize.height
+                val effectiveWidth =
+                    if (containerWidth > 0) min(constraints.maxWidth, containerWidth) else constraints.maxWidth
+                val effectiveHeight =
+                    if (containerHeight > 0) containerHeight else constraints.maxHeight
+                val widthDp = with(density) { effectiveWidth.toDp() }
+                val heightDp = with(density) { effectiveHeight.toDp() }
+                DpSize(widthDp, heightDp)
+            }
             Content(
                 widgets = widgets,
                 gridSize = gridSize,
                 rowState = rowState,
                 hapticFeedback = hapticFeedback,
                 isRefreshing = isRefreshing,
+                lastUpdated = lastUpdated,
                 onRefresh = onRefresh,
                 onQuoteClick = onQuoteClick,
                 quoteCard = quoteCard,
                 listFadingEdges = listFadingEdges,
                 registerWidgetScroll = registerWidgetScroll,
-                selectedItemIndex = selectedItemIndex,
-                onContentScrollableChanged = { connection.canCollapse = it },
             )
         }
-        TopAppBar(
-            modifier = Modifier,
-            scrollState = connection,
-            appName = appName,
-            hasHoldings = hasHoldings,
-            totalHoldingsIcon = totalHoldingsIcon,
-            onTotalHoldingsClick = {
-                showTotalHoldingsPopup = true
-            }
-        )
-        if (showTotalHoldingsPopup && totalGainLoss != null) {
-            totalHoldingsPopup(totalGainLoss) {
-                showTotalHoldingsPopup = false
-            }
+    }
+    if (showTotalHoldingsPopup && totalGainLoss != null) {
+        totalHoldingsPopup(totalGainLoss) {
+            showTotalHoldingsPopup = false
         }
     }
 }
@@ -240,32 +193,12 @@ private fun TopAppBar(
     appName: String,
     hasHoldings: Boolean,
     totalHoldingsIcon: Painter,
-    scrollState: CollapsingTopBarScrollConnection,
     onTotalHoldingsClick: () -> Unit,
 ) {
-    val topAppBarColors = TopAppBarDefaults.topAppBarColors()
-    val backgroundColor = topAppBarColors.containerColor
-    val offset = abs(scrollState.appBarOffset / TopAppBarDefaults.TopAppBarExpandedHeight.value)
-    val tobAppBarBackgroundColor = animateColorAsState(
-        when (offset) {
-            0f -> {
-                backgroundColor.copy(alpha = 0f)
-            }
-            in 0f..TopAppBarDefaults.TopAppBarExpandedHeight.value -> {
-                backgroundColor.copy(alpha = offset)
-            }
-            else -> {
-                backgroundColor.copy(alpha = 1f)
-            }
-        }
-    )
     com.github.premnirmal.ticker.ui.TopBar(
         modifier = modifier,
         text = appName,
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = tobAppBarBackgroundColor.value,
-            titleContentColor = topAppBarColors.titleContentColor,
-        ),
+        colors = TopAppBarDefaults.topAppBarColors(),
         actions = {
             if (hasHoldings) {
                 IconButton(
@@ -289,6 +222,7 @@ private fun Content(
     rowState: LazyListState,
     hapticFeedback: HapticFeedback,
     isRefreshing: Boolean,
+    lastUpdated: String,
     onRefresh: () -> Unit,
     onQuoteClick: (Quote) -> Unit,
     quoteCard: @Composable (
@@ -299,12 +233,8 @@ private fun Content(
     ) -> Unit,
     listFadingEdges: (ScrollableState) -> Modifier,
     registerWidgetScroll: @Composable (index: Int, scroll: suspend () -> Unit) -> Unit,
-    selectedItemIndex: Int,
-    onContentScrollableChanged: (Boolean) -> Unit,
 ) {
     if (widgets.isEmpty()) {
-        // No widgets means nothing to scroll, so the header must stay expanded.
-        LaunchedEffect(Unit) { onContentScrollableChanged(false) }
         return
     }
     run {
@@ -321,17 +251,6 @@ private fun Content(
                 val quotesList by widget.stocks.collectAsState()
                 var quotes by remember(quotesList) { mutableStateOf(quotesList) }
                 val lazyStaggeredGridState = rememberLazyStaggeredGridState()
-                // Drive the collapsing header off the visible page's grid: only let the header
-                // collapse when that grid actually has off-screen content to scroll.
-                if (index == selectedItemIndex) {
-                    val canScroll by remember(lazyStaggeredGridState) {
-                        derivedStateOf {
-                            lazyStaggeredGridState.canScrollForward ||
-                                lazyStaggeredGridState.canScrollBackward
-                        }
-                    }
-                    LaunchedEffect(canScroll) { onContentScrollableChanged(canScroll) }
-                }
                 val reorderableLazyStaggeredGridState = rememberReorderableLazyStaggeredGridState(
                     lazyStaggeredGridState
                 ) { from, to ->
@@ -362,14 +281,25 @@ private fun Content(
                             .fillMaxHeight()
                             .horizontalScroll(horizontalScrollState),
                     ) {
-                        LazyVerticalStaggeredGrid(
+                        // Header and table share one horizontal scroll container so they pan
+                        // together instead of drifting apart when the user scrolls sideways.
+                        Column(
                             modifier = Modifier
                                 // At least wide enough for the columns; wider screens stretch the
                                 // name column instead of leaving a gap on the right.
                                 .width(maxOf(QUOTE_TABLE_WIDTH, width))
-                                .fillMaxHeight()
-                                .then(listFadingEdges(lazyStaggeredGridState)),
-                            state = lazyStaggeredGridState,
+                                .fillMaxHeight(),
+                        ) {
+                            WidgetTabHeader(
+                                quotes = quotes,
+                                lastUpdated = lastUpdated,
+                            )
+                            LazyVerticalStaggeredGrid(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .fillMaxHeight()
+                                    .then(listFadingEdges(lazyStaggeredGridState)),
+                                state = lazyStaggeredGridState,
                             columns = StaggeredGridCells.Fixed(1),
                             contentPadding = PaddingValues(start = 8.dp, top = 8.dp, end = 8.dp, bottom = 8.dp + LocalContentBottomPadding.current),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -400,90 +330,8 @@ private fun Content(
                                     )
                                 }
                             }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun Header(
-    modifier: Modifier = Modifier,
-    hasWidgets: Boolean,
-    subtitle: String,
-    widgets: List<WatchlistWidget>,
-    selectedItemIndex: Int,
-    coroutineScope: CoroutineScope,
-    rowState: LazyListState,
-    headerBackground: Painter?,
-) {
-    Box(
-        modifier = modifier.fillMaxWidth(),
-    ) {
-        if (headerBackground != null) {
-            val color = MaterialTheme.colorScheme.surface
-            Image(
-                modifier = Modifier.fillMaxSize().graphicsLayer { alpha = 0.99f }
-                    .drawWithContent {
-                        val colors = listOf(
-                            color,
-                            Color.Transparent,
-                        )
-                        drawContent()
-                        drawRect(
-                            brush = Brush.verticalGradient(colors),
-                            blendMode = BlendMode.DstIn
-                        )
-                    },
-                contentScale = ContentScale.Crop,
-                painter = headerBackground,
-                contentDescription = null,
-            )
-        }
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.BottomCenter)
-        ) {
-            Spacer(Modifier.weight(1f))
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 16.dp, start = 16.dp, end = 16.dp, bottom = 8.dp),
-                text = subtitle,
-                style = MaterialTheme.typography.labelMedium
-            )
-            if (hasWidgets && widgets.isNotEmpty()) {
-                ScrollableTabRow(
-                    modifier = Modifier.wrapContentWidth().align(Alignment.CenterHorizontally),
-                    selectedTabIndex = selectedItemIndex,
-                    edgePadding = 0.dp,
-                    divider = {},
-                    containerColor = Color.Transparent,
-                    indicator = { tabPositions ->
-                        if (tabPositions.isNotEmpty() && tabPositions.size > selectedItemIndex) {
-                            TabRowDefaults.SecondaryIndicator(
-                                modifier = Modifier.customTabIndicatorOffset(tabPositions[selectedItemIndex]),
-                                height = 2.dp,
-                                color = MaterialTheme.colorScheme.secondary,
-                            )
-                        }
-                    },
-                ) {
-                    widgets.forEachIndexed { index, widget ->
-                        val selected by remember(selectedItemIndex) { derivedStateOf { selectedItemIndex == index } }
-                        TabText(
-                            selected = selected,
-                            text = widget.name.uppercase(),
-                            onClick = {
-                                coroutineScope.launch {
-                                    rowState.animateScrollToItem(index)
-                                }
                             }
-                        )
+                        }
                     }
                 }
             }
@@ -491,55 +339,92 @@ private fun Header(
     }
 }
 
+/**
+ * Summary strip rendered at the top of every watchlist page.
+ *
+ * Each page is one widget, so the totals come from that page's quotes alone — two pages holding
+ * different portfolios report different numbers, which is exactly why the summary lives inside the
+ * page rather than in a single shared header. The refresh time is global (one quote fetch feeds
+ * every widget) and therefore reads the same on each page.
+ */
 @Composable
-private fun TabText(
-    selected: Boolean,
-    text: String,
-    onClick: () -> Unit,
+private fun WidgetTabHeader(
+    quotes: List<Quote>,
+    lastUpdated: String,
 ) {
-    Tab(
-        selected = selected,
-        onClick = onClick,
-        text = {
-            Text(
-                text = text,
-                style = if (selected) {
-                    MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.ExtraBold,
-                    )
-                } else {
-                    MaterialTheme.typography.labelMedium
-                },
-                textAlign = TextAlign.Center,
-                color = if (selected) {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                } else {
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                },
+    val summary = remember(quotes) { PortfolioSummary.from(quotes) }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Row(modifier = Modifier.fillMaxWidth()) {
+            SummaryStatistic(
+                modifier = Modifier.weight(1f),
+                label = stringResource(Res.string.market_value),
+                value = summary.marketValueString(),
+            )
+            SummaryStatistic(
+                modifier = Modifier.weight(1f),
+                label = stringResource(Res.string.today_gain_loss),
+                value = summary.todayGainLossString(),
+                subtitle = summary.todayGainLossPercentString(),
+                valueColor = SharedColours.changeColour(
+                    up = summary.todayGainLoss > 0f,
+                    down = summary.todayGainLoss < 0f,
+                ),
+            )
+            SummaryStatistic(
+                modifier = Modifier.weight(1f),
+                label = stringResource(Res.string.total_gain_loss),
+                value = summary.totalGainLossString(),
+                subtitle = summary.totalGainLossPercentString(),
+                valueColor = SharedColours.changeColour(
+                    up = summary.totalGainLoss > 0f,
+                    down = summary.totalGainLoss < 0f,
+                ),
             )
         }
-    )
+        if (lastUpdated.isNotEmpty()) {
+            Text(
+                text = lastUpdated,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
-private fun Modifier.customTabIndicatorOffset(
-    currentTabPosition: TabPosition
-): Modifier = composed(
-    inspectorInfo = debugInspectorInfo {
-        name = "customTabIndicatorOffset"
-        value = currentTabPosition
-    }
+/**
+ * One label/value pair of [WidgetTabHeader]. [subtitle] carries the matching percentage, and both
+ * it and [value] take [valueColor] so a gain or loss reads as a single coloured block.
+ */
+@Composable
+private fun SummaryStatistic(
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    valueColor: Color = MaterialTheme.colorScheme.onSurface,
 ) {
-    val currentTabWidth by animateDpAsState(
-        targetValue = currentTabPosition.width * 0.33f,
-        animationSpec = tween(durationMillis = 150, easing = FastOutLinearInEasing),
-        label = ""
-    )
-    val indicatorOffset by animateDpAsState(
-        targetValue = currentTabPosition.left,
-        animationSpec = tween(durationMillis = 150, easing = FastOutLinearInEasing),
-        label = ""
-    )
-    wrapContentSize(Alignment.BottomStart)
-        .offset(x = indicatorOffset + currentTabPosition.width * 0.33f)
-        .width(currentTabWidth)
+    Column(modifier = modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = valueColor,
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelSmall,
+                color = valueColor,
+            )
+        }
+    }
 }
+

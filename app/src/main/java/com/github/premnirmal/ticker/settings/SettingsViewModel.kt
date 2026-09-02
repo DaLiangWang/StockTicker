@@ -2,7 +2,6 @@ package com.github.premnirmal.ticker.settings
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -17,7 +16,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import timber.log.Timber
 
 class SettingsViewModel constructor(
     private val widgetDataProvider: WidgetDataProvider,
@@ -114,59 +112,10 @@ class SettingsViewModel constructor(
         }
     }
 
-    fun sharePortfolio(context: Context, uri: Uri) {
-        viewModelScope.launch {
-            val result = TickersExporter.exportTickers(context, uri, stocksProvider.tickers.value)
-            if (result == null) {
-                context.showDialog(context.getString(R.string.error_sharing))
-                Timber.w(Throwable("Error sharing tickers"))
-            } else {
-                val intent = Intent(Intent.ACTION_SEND)
-                intent.type = "text/plain"
-                intent.putExtra(Intent.EXTRA_EMAIL, arrayOf<String>())
-                intent.putExtra(Intent.EXTRA_SUBJECT, context.getString(R.string.my_stock_portfolio))
-                intent.putExtra(Intent.EXTRA_TEXT, context.getString(R.string.share_email_subject))
-                intent.putExtra(Intent.EXTRA_STREAM, uri)
-                val launchIntent = Intent.createChooser(intent, context.getString(R.string.action_share))
-                launchIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                context.startActivity(launchIntent)
-            }
-        }
-    }
-
-    fun exportPortfolio(context: Context, uri: Uri) {
-        viewModelScope.launch {
-            val result = PortfolioExporter.exportQuotes(context, uri, stocksProvider.portfolio.value)
-            if (result == null) {
-                context.showDialog(context.getString(R.string.error_exporting))
-                Timber.w(Throwable("Error exporting tickers"))
-            } else {
-                context.showDialog(context.getString(R.string.exported_to))
-            }
-        }
-    }
-
-    fun importPortfolio(context: Context, fileUri: Uri) {
-        val type = context.contentResolver.getType(fileUri)
-        val task: ImportTask = if ("text/plain" == type) {
-            TickersImportTask(widgetDataProvider)
-        } else {
-            PortfolioImportTask(stocksProvider)
-        }
-        viewModelScope.launch {
-            val imported = task.import(context, fileUri)
-            if (imported) {
-                context.showDialog(context.getString(R.string.ticker_import_success))
-            } else {
-                context.showDialog(context.getString(R.string.ticker_import_fail))
-            }
-        }
-    }
-
     /**
      * Imports positions (symbol, shares, cost price) from [fileUri] and reports the outcome as a
-     * localised message. Unlike [importPortfolio] this creates real holdings, which is what the
-     * 今日盈亏 / 累计盈亏 / 当前市值 figures are computed from.
+     * localised message, creating real holdings — which is what the 今日盈亏 / 累计盈亏 / 当前市值
+     * figures are computed from.
      */
     fun importPositions(context: Context, fileUri: Uri) {
         viewModelScope.launch {
@@ -195,7 +144,7 @@ class SettingsViewModel constructor(
             val shares = entry.shares
             val price = entry.price
             if (entry.hasPosition && shares != null && price != null) {
-                stocksProvider.addHolding(entry.symbol, shares, price)
+                stocksProvider.setHolding(entry.symbol, shares, price)
                 imported++
             }
         }

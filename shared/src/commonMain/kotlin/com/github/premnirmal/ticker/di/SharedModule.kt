@@ -8,7 +8,6 @@ import com.github.premnirmal.ticker.network.TrendingProvider
 import com.github.premnirmal.ticker.network.PreferenceAShareQuoteApi
 import com.github.premnirmal.ticker.network.StocksApi
 import com.github.premnirmal.ticker.network.SuggestionsProvider
-import com.github.premnirmal.ticker.settings.PortfolioSerializer
 import org.koin.dsl.module
 
 /**
@@ -43,5 +42,4 @@ val sharedModule = module {
     }
     single { HistoryProvider(aShareQuoteApi = get()) }
     single { SuggestionsProvider(stocksApi = get()) }
-    single { PortfolioSerializer(json = get()) }
 }

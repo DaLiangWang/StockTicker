@@ -201,17 +201,6 @@ class WidgetData : IWidgetData, KoinComponent {
         emitWidgetChanges()
     }
 
-    fun widgetSizePref(): Int = preferences.getInt(WIDGET_SIZE, 0)
-
-    fun setWidgetSizePref(value: Int) {
-        preferences.edit {
-            putInt(WIDGET_SIZE, value)
-        }
-        _prefsFlow.value = toPrefs()
-        _data.value = toState()
-        emitWidgetChanges()
-    }
-
     @Deprecated("will be removed in future version")
     fun fontSizePref(): Int = preferences.getInt(FONT_SIZE, 3)
 
@@ -245,17 +234,6 @@ class WidgetData : IWidgetData, KoinComponent {
         emitWidgetChanges()
     }
 
-    fun layoutPref(): Int = preferences.getInt(LAYOUT_TYPE, 0)
-
-    fun setLayoutPref(value: Int) {
-        preferences.edit {
-            putInt(LAYOUT_TYPE, value)
-        }
-        _prefsFlow.value = toPrefs()
-        _data.value = toState()
-        emitWidgetChanges()
-    }
-
     @ColorRes fun textColorRes(): Int {
         val pref = textColorPref()
         return if (pref == SYSTEM) {
@@ -274,7 +252,7 @@ class WidgetData : IWidgetData, KoinComponent {
     }
 
     override val layoutType: LayoutType
-        get() = LayoutType.fromInt(layoutPref())
+        get() = LayoutType.MyPortfolio
 
     @DrawableRes
     fun backgroundResource(): Int {
@@ -373,17 +351,6 @@ class WidgetData : IWidgetData, KoinComponent {
     fun setBoldEnabled(value: Boolean) {
         preferences.edit {
             putBoolean(BOLD_CHANGE, value)
-        }
-        _prefsFlow.value = toPrefs()
-        _data.value = toState()
-        emitWidgetChanges()
-    }
-
-    fun readIsCurrencyEnabled(): Boolean = preferences.getBoolean(SHOW_CURRENCY, false)
-
-    fun setCurrencyEnabled(value: Boolean) {
-        preferences.edit {
-            putBoolean(SHOW_CURRENCY, value)
         }
         _prefsFlow.value = toPrefs()
         _data.value = toState()
@@ -503,10 +470,7 @@ class WidgetData : IWidgetData, KoinComponent {
             autoSort = autoSortEnabled(),
             boldText = readIsBoldEnabled(),
             hideWidgetHeader = readHideHeader(),
-            showCurrency = readIsCurrencyEnabled(),
             isDarkMode = nightMode,
-            typePref = layoutPref(),
-            sizePref = widgetSizePref(),
             backgroundPref = bgPref(),
             textColourPref = textColorPref(),
             changeType = changeType(),
@@ -533,9 +497,7 @@ class WidgetData : IWidgetData, KoinComponent {
             layoutType = layoutType,
             fontSizePref = fontSizePref(),
             fontSize = readFontSize(),
-            showCurrency = readIsCurrencyEnabled(),
             isDarkMode = nightMode,
-            sizePref = widgetSizePref(),
             hideWidgetHeader = readHideHeader(),
             backgroundResource = backgroundResource(),
             bgPref = bgType(),
@@ -640,9 +602,7 @@ class WidgetData : IWidgetData, KoinComponent {
         val fontSizePref: Int,
         @Deprecated("will be removed in future version")
         val fontSize: Float,
-        val showCurrency: Boolean,
         val isDarkMode: Boolean,
-        val sizePref: Int,
         val hideWidgetHeader: Boolean,
         @param:DrawableRes
         @get:DrawableRes
@@ -671,10 +631,7 @@ class WidgetData : IWidgetData, KoinComponent {
         val autoSort: Boolean,
         val boldText: Boolean,
         val hideWidgetHeader: Boolean,
-        val showCurrency: Boolean,
         val isDarkMode: Boolean,
-        val typePref: Int,
-        val sizePref: Int,
         val backgroundPref: Int,
         val textColourPref: Int,
         val changeType: IWidgetData.ChangeType,

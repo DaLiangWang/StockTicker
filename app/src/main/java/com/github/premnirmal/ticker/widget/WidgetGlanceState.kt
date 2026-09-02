@@ -40,12 +40,10 @@ data class WidgetGlanceState(
 data class SerializableWidgetState(
     val boldText: Boolean = false,
     val changeType: SerializableChangeType = SerializableChangeType.Percent,
-    val layoutType: SerializableLayoutType = SerializableLayoutType.Animated,
+    val layoutType: SerializableLayoutType = SerializableLayoutType.MyPortfolio,
     @Deprecated("will be removed in future version")
     val fontSize: Float = 12f,
-    val showCurrency: Boolean = false,
     val isDarkMode: Boolean = false,
-    val sizePref: Int = 0,
     val hideWidgetHeader: Boolean = false,
     @param:DrawableRes
     @get:DrawableRes
@@ -91,9 +89,7 @@ data class SerializableWidgetState(
                 changeType = SerializableChangeType.from(state.changeType),
                 layoutType = SerializableLayoutType.from(state.layoutType),
                 fontSize = state.fontSize,
-                showCurrency = state.showCurrency,
                 isDarkMode = state.isDarkMode,
-                sizePref = state.sizePref,
                 hideWidgetHeader = state.hideWidgetHeader,
                 backgroundResource = state.backgroundResource,
                 positiveTextColor = state.positiveTextColor,
@@ -127,20 +123,13 @@ enum class SerializableChangeType {
 
 @Serializable
 enum class SerializableLayoutType {
-    Animated,
-    Tabs,
-    Fixed,
     MyPortfolio;
 
     companion object {
-        fun from(layoutType: IWidgetData.LayoutType): SerializableLayoutType {
-            return when (layoutType) {
-                IWidgetData.LayoutType.Animated -> Animated
-                IWidgetData.LayoutType.Tabs -> Tabs
-                IWidgetData.LayoutType.Fixed -> Fixed
-                IWidgetData.LayoutType.MyPortfolio -> MyPortfolio
-            }
-        }
+        // The argument is ignored: only the holdings layout exists now. The mapping is kept so the
+        // enum can grow again without touching call sites.
+        @Suppress("UNUSED_PARAMETER")
+        fun from(layoutType: IWidgetData.LayoutType): SerializableLayoutType = MyPortfolio
     }
 }
 

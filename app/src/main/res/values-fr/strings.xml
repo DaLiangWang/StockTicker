@@ -3,8 +3,6 @@
   <string name="portfolio">Portefeuille</string>
   <string name="add_to_portfolio">Ajouter ou supprimer du portefeuille</string>
   <string name="action_add">Ajouter</string>
-  <string name="action_export">Exporter côtes</string>
-  <string name="action_share">Partager portefeuille</string>
   <string name="privacy_policy">Politique de confidentialité</string>
   <string name="export_desc">Exporte votre portefeuille vers un fichier .json</string>
   <string name="action_import">Importer un portefeuille</string>
@@ -54,12 +52,8 @@
   <string name="theme_updated_message">Thème de l\'application mis à jour</string>
   <string name="days_updated_message">Jours d\'actualisation mis à jour</string>
   <string name="days_updated_error_message">Erreur - vous devez sélectionner des jours</string>
-  <string name="error_exporting">Erreur d\'export du fichier</string>
   <string name="error_symbol">Caractère invalide</string>
-  <string name="error_sharing">Erreur de partage des côtes</string>
   <string name="error_fetching_stock">Erreur lors de la récupération des actions</string>
-  <string name="ticker_import_success">Actions importées avec succès</string>
-  <string name="ticker_import_fail">Erreur d\'import des actions</string>
   <string name="no_network_message">Pas de connexion réseau</string>
   <string name="refresh_failed">Échec de la mise à jour</string>
   <string name="news_fetch_failed">Impossible de récupérer les actualités</string>
@@ -71,7 +65,6 @@
   <string name="end_time_updated">Heure de fin mise à jour</string>
   <string name="start_time_updated">Heure de début mise à jour</string>
   <string name="incorrect_time_update_error">L\'heure de début doit être différente de l\'heure de fin</string>
-  <string name="share_email_subject">Voici les actions que j\'ai créées en utilisant StocksWidget - https://play.google.com/store/apps/details?id=com.github.premnirmal.tickerwidget \n\n Vous pouvez les importer dans l\'application en allant dans les paramètres et en choisissant \"Importer\"</string>
   <string name="my_stock_portfolio">Mon portefeuille d\'actions</string>
   <string name="number_of_shares">Nombre d\'actions</string>
   <string name="shares">Actions</string>
@@ -116,14 +109,11 @@
   <string name="add_positions_prompt">Voulez-vous ajouter des positions pour %1$s ?</string>
   <string name="already_in_portfolio">%1$s est déjà dans votre portefeuille</string>
   <string name="added_to_list">%1$s ajouté dans votre portefeuille</string>
-  <string name="next_fetch">Prochaine récupération : %1$s</string>
   <string name="last_fetch">Dernière récupération : %1$s</string>
-  <string name="last_and_next_fetch">Dernière récupération : %1$s\nProchaine récupération : %2$s</string>
   <string name="total_holdings">Total Parts : %1$s</string>
   <string name="cannot_export_msg">Export des actions impossible sans la permission d\'écrire sur la mémoire de stockage externe</string>
   <string name="cannot_import_msg">Import des actions impossible sans la permission de lire la mémoire de stockage externe</string>
   <string name="cannot_share_msg">Partage des actions impossible sans la permission d\'écrire sur la mémoire de stockage externe</string>
-  <string name="exported_to">Exporté avec succès</string>
   <string name="whats_new">Nouveautés</string>
   <string name="whats_new_in">Nouveautés de la v%1$s</string>
   <string name="enter_a_symbol">Écrivez un caractère</string>

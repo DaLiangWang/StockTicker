@@ -97,12 +97,7 @@ fun WidgetsScreen(
             widgetName = stringResource(id = R.string.widget_name),
             addStock = stringResource(id = R.string.add_stock),
             trendingStocks = stringResource(id = R.string.trending_stocks),
-            autoSort = stringResource(id = R.string.auto_sort),
-            autoSortDesc = stringResource(id = R.string.auto_sort_desc),
-            layoutType = stringResource(id = R.string.layout_type),
-            layoutTypes = stringArrayResource(id = R.array.layout_types),
-            widgetWidth = stringResource(id = R.string.widget_width),
-            widgetWidthTypes = stringArrayResource(id = R.array.widget_width_types),
+
             background = stringResource(id = R.string.bg),
             backgrounds = stringArrayResource(id = R.array.backgrounds),
             textColor = stringResource(id = R.string.text_color),
@@ -111,8 +106,7 @@ fun WidgetsScreen(
             boldChangeDesc = stringResource(id = R.string.bold_change_desc),
             hideHeader = stringResource(id = R.string.hide_header),
             hideHeaderDesc = stringResource(id = R.string.hide_header_desc),
-            showCurrency = stringResource(id = R.string.setting_currency),
-            showCurrencyDesc = stringResource(id = R.string.setting_currency_desc),
+
             showRefresh = stringResource(id = R.string.show_refresh),
             showRefreshDesc = stringResource(id = R.string.show_refresh_desc),
             showMarketValue = stringResource(id = R.string.widget_show_market_value),
@@ -204,16 +198,13 @@ private class WidgetDataSettings(
 
     override fun setWidgetName(value: String) = widgetData.setWidgetName(value)
     override fun setAutoSort(value: Boolean) = widgetData.setAutoSort(value)
-    override fun setLayoutPref(value: Int) = widgetData.setLayoutPref(value)
 
     @Deprecated("will be removed in future version")
     override fun setFontSize(value: Int) = widgetData.setFontSize(value)
-    override fun setWidgetSizePref(value: Int) = widgetData.setWidgetSizePref(value)
     override fun setBgPref(value: Int) = widgetData.setBgPref(value)
     override fun setTextColorPref(value: Int) = widgetData.setTextColorPref(value)
     override fun setBoldEnabled(value: Boolean) = widgetData.setBoldEnabled(value)
     override fun setHideHeader(value: Boolean) = widgetData.setHideHeader(value)
-    override fun setCurrencyEnabled(value: Boolean) = widgetData.setCurrencyEnabled(value)
     override fun setShowRefreshButton(value: Boolean) = widgetData.setShowRefreshButton(value)
     override fun setShowMarketValue(value: Boolean) = widgetData.setShowMarketValue(value)
     override fun setShowTodayGainLoss(value: Boolean) = widgetData.setShowTodayGainLoss(value)
@@ -224,14 +215,11 @@ private class WidgetDataSettings(
 private fun WidgetData.Prefs.toWidgetPrefs() = WidgetPrefs(
     name = name,
     autoSort = autoSort,
-    typePref = typePref,
     fontSizePref = fontSizePref,
-    sizePref = sizePref,
     backgroundPref = backgroundPref,
     textColourPref = textColourPref,
     boldText = boldText,
     hideWidgetHeader = hideWidgetHeader,
-    showCurrency = showCurrency,
     showRefreshButton = showRefreshButton,
     showMarketValue = showMarketValue,
     showTodayGainLoss = showTodayGainLoss,

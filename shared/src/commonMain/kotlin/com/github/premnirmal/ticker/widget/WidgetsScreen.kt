@@ -193,33 +193,6 @@ private fun LazyListScope.widgetSettings(
         }
     }
     item {
-        CheckboxPreference(
-            title = strings.autoSort,
-            subtitle = strings.autoSortDesc,
-            checked = prefs.autoSort,
-            onCheckChanged = settings::setAutoSort
-        )
-        divider()
-    }
-    item {
-        ListPreference(
-            title = strings.layoutType,
-            items = strings.layoutTypes,
-            selected = prefs.typePref,
-            onSelected = settings::setLayoutPref
-        )
-        divider()
-    }
-    item {
-        ListPreference(
-            title = strings.widgetWidth,
-            items = strings.widgetWidthTypes,
-            selected = prefs.sizePref,
-            onSelected = settings::setWidgetSizePref
-        )
-        divider()
-    }
-    item {
         ListPreference(
             title = strings.background,
             items = strings.backgrounds,
@@ -254,14 +227,6 @@ private fun LazyListScope.widgetSettings(
             onCheckChanged = settings::setHideHeader
         )
         divider()
-    }
-    item {
-        CheckboxPreference(
-            title = strings.showCurrency,
-            subtitle = strings.showCurrencyDesc,
-            checked = prefs.showCurrency,
-            onCheckChanged = settings::setCurrencyEnabled
-        )
     }
     item {
         CheckboxPreference(

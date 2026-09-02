@@ -52,11 +52,9 @@ fun GlanceWidgetPreview(
     quotes: List<Quote>,
     onRefreshClick: () -> Unit = {},
 ) {
-    val columns = when {
-        widgetData.sizePref > 0 -> widgetData.sizePref
-        widgetData.layoutType == SerializableLayoutType.MyPortfolio -> 1
-        else -> 2
-    }
+    // Only the holdings layout remains and the column-count preference was removed, so the preview
+    // always renders a single column.
+    val columns = 1
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -163,13 +161,8 @@ private fun QuotesGrid(
         items(items = quotes, key = { it.symbol }) { stock ->
             val changeValueFormatted = stock.changeString()
             val changePercentFormatted = stock.changePercentString()
-            val priceFormatted = remember(widgetData.showCurrency) {
-                if (widgetData.showCurrency) {
-                    stock.priceFormat.format(stock.lastTradePrice)
-                } else {
-                    stock.priceString()
-                }
-            }
+            // The "show currency" preference was removed, so amounts are always currency-formatted.
+            val priceFormatted = stock.priceFormat.format(stock.lastTradePrice)
             val displayName = stock.properties?.displayname.takeUnless { it.isNullOrBlank() } ?: stock.symbol
             val change = stock.change
             val changeInPercent = stock.changeInPercent
@@ -178,7 +171,7 @@ private fun QuotesGrid(
             }
             val changeColor = colorResource(widgetChangeColor)
             val changeFormatted = remember(changeType, layoutType) {
-                if (layoutType == SerializableLayoutType.Tabs) {
+                if (layoutType == SerializableLayoutType.MyPortfolio) {
                     changeValueFormatted
                 } else {
                     when (changeType) {
@@ -189,7 +182,7 @@ private fun QuotesGrid(
             }
 
             val onClickValue = {
-                if (layoutType == SerializableLayoutType.Fixed) {
+                if (layoutType == SerializableLayoutType.MyPortfolio) {
                     changeType = when (changeType) {
                         SerializableChangeType.Value -> SerializableChangeType.Percent
                         SerializableChangeType.Percent -> SerializableChangeType.Value
@@ -247,7 +240,7 @@ private fun QuotesGrid(
                         maxLines = 1,
                     )
 
-                    if (layoutType == SerializableLayoutType.Tabs) {
+                    if (layoutType == SerializableLayoutType.MyPortfolio) {
                         Text(
                             modifier = Modifier
                                 .weight(1f)
@@ -277,16 +270,9 @@ private fun MyPortfolio(
     val fontSize = widgetData.fontSize
     val gainLossFormatted = stock.gainLossString()
     val gainLossPercentFormatted = stock.gainLossPercentString()
-    val priceFormatted = if (widgetData.showCurrency) {
-        stock.priceFormat.format(stock.lastTradePrice)
-    } else {
-        stock.priceString()
-    }
-    val holdingsFormatted = if (widgetData.showCurrency) {
-        stock.priceFormat.format(stock.holdings())
-    } else {
-        stock.holdingsString()
-    }
+    // The "show currency" preference was removed, so amounts are always currency-formatted.
+    val priceFormatted = stock.priceFormat.format(stock.lastTradePrice)
+    val holdingsFormatted = stock.priceFormat.format(stock.holdings())
     val displayName = stock.properties?.displayname.takeUnless { it.isNullOrBlank() } ?: stock.symbol
     val gainLoss = stock.gainLoss()
     val gainLossColor = colorResource(widgetData.getChangeColor(gainLoss, gainLoss))
@@ -477,13 +463,11 @@ private fun fakePosition(symbol: String): Position {
 }
 
 private fun previewDataState(
-    layoutType: IWidgetData.LayoutType = IWidgetData.LayoutType.Fixed,
+    layoutType: IWidgetData.LayoutType = IWidgetData.LayoutType.MyPortfolio,
 ): SerializableWidgetState = SerializableWidgetState(
     layoutType = SerializableLayoutType.from(layoutType),
-    showCurrency = false,
     boldText = false,
     changeType = SerializableChangeType.Percent,
-    sizePref = 0,
     fontSize = 12f,
     isDarkMode = false,
     hideWidgetHeader = false,

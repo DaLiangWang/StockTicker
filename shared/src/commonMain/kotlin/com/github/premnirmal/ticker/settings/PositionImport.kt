@@ -28,11 +28,10 @@ data class PositionImportEntry(
 }
 
 /**
- * Pure, platform-agnostic parsing/serializing of the positions import & export format.
+ * Pure, platform-agnostic parsing of the positions CSV import format.
  *
- * Kept separate from [PortfolioSerializer] (which owns the legacy tickers-list and portfolio-JSON
- * formats) so each format's rules stay readable, but following the same rules: no platform IO and
- * no Android/iOS dependencies, so a file produced on one platform imports on the other.
+ * No platform IO and no Android/iOS dependencies, so a file produced on one platform imports on the
+ * other. The Android file IO lives in [PositionsImportTask].
  */
 object PositionImportParser {
 

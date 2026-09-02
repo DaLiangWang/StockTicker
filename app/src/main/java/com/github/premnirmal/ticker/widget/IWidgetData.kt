@@ -19,22 +19,16 @@ interface IWidgetData {
         Percent,
     }
 
+    /**
+     * Only the holdings ("MyPortfolio") layout remains. The app now tracks positions exclusively, so
+     * the animated / tabs / fixed quote layouts — and the preference that switched between them —
+     * were removed; every widget renders the same holdings view.
+     */
     enum class LayoutType {
-        Animated,
-        Tabs,
-        Fixed,
         MyPortfolio;
 
         companion object {
-            fun fromInt(value: Int): LayoutType {
-                return when (value) {
-                    0 -> Animated
-                    1 -> Tabs
-                    2 -> Fixed
-                    3 -> MyPortfolio
-                    else -> Animated
-                }
-            }
+            fun fromInt(value: Int): LayoutType = MyPortfolio
         }
     }
 

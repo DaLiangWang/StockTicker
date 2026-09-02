@@ -8,8 +8,6 @@
   <string name="feature_request">機能をリクエスト</string>
   <string name="feature_request_desc">新機能のリクエストを送信</string>
   <string name="action_add">追加</string>
-  <string name="action_export">銘柄リストをエクスポート</string>
-  <string name="action_share">ポートフォリオを共有</string>
   <string name="privacy_policy">プライバシーポリシー</string>
   <string name="export_desc">ポートフォリオを .json ファイルにエクスポート</string>
   <string name="action_import">銘柄リストをインポート</string>
@@ -64,12 +62,8 @@
   <string name="theme_updated_message">アプリのテーマを更新しました</string>
   <string name="days_updated_message">更新する曜日を変更しました</string>
   <string name="days_updated_error_message">エラー：曜日を選択してください</string>
-  <string name="error_exporting">ファイルのエクスポート中にエラーが発生しました</string>
   <string name="error_symbol">無効なシンボル</string>
-  <string name="error_sharing">銘柄の共有中にエラーが発生しました</string>
   <string name="error_fetching_stock">銘柄の取得中にエラーが発生しました</string>
-  <string name="ticker_import_success">銘柄を正常にインポートしました</string>
-  <string name="ticker_import_fail">銘柄のインポート中にエラーが発生しました</string>
   <string name="no_network_message">ネットワーク接続がありません</string>
   <string name="refresh_failed">更新に失敗しました</string>
   <string name="news_fetch_failed">ニュースの取得に失敗しました</string>
@@ -80,7 +74,6 @@
   <string name="end_time_updated">終了時間を更新しました</string>
   <string name="start_time_updated">開始時間を更新しました</string>
   <string name="incorrect_time_update_error">開始時間と終了時間は同じにできません</string>
-  <string name="share_email_subject">StocksWidget で作成したティッカーリストです - https://play.google.com/store/apps/details?id=com.github.premnirmal.tickerwidget \n\nアプリの設定から「インポート」を選ぶと、このティッカーをインポートできます</string>
   <string name="my_stock_portfolio">株式ポートフォリオ</string>
   <string name="number_of_shares">株数</string>
   <string name="shares">株</string>
@@ -125,14 +118,11 @@
   <string name="add_positions_prompt">%1$s のポジションを追加しますか？</string>
   <string name="already_in_portfolio">%1$s はすでにポートフォリオに追加されています</string>
   <string name="added_to_list">%1$s をポートフォリオに追加しました</string>
-  <string name="next_fetch">次回の取得: %1$s</string>
   <string name="last_fetch">前回の取得: %1$s</string>
-  <string name="last_and_next_fetch">前回の取得: %1$s\n次回の取得: %2$s</string>
   <string name="total_holdings">保有株の合計: %1$s</string>
   <string name="cannot_export_msg">外部ストレージへの書き込み許可がないため、銘柄リストをエクスポートできません</string>
   <string name="cannot_import_msg">外部ストレージへの読み取り許可がないため、銘柄リストをインポートできません</string>
   <string name="cannot_share_msg">外部ストレージへの書き込み許可がないため、銘柄リストを共有できません</string>
-  <string name="exported_to">エクスポートに成功しました</string>
   <string name="whats_new">新機能</string>
   <string name="whats_new_in">v%1$s の新機能</string>
   <string name="enter_a_symbol">シンボルを入力</string>

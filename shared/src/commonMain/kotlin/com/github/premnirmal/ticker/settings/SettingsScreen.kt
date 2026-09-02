@@ -63,13 +63,8 @@ fun SettingsScreen(
     startTimeTitle: String,
     endTimeTitle: String,
     updateDaysTitle: String,
-    autoSortTitle: String,
-    autoSortSubtitle: String,
     roundTwoDpTitle: String,
     roundTwoDpSubtitle: String,
-    shareTitle: String,
-    exportTitle: String,
-    exportSubtitle: String,
     openSourceText: String,
     confirmLabel: String,
     dismissLabel: String,
@@ -83,18 +78,10 @@ fun SettingsScreen(
     onStartTimeSet: (time: String, hour: Int, minute: Int) -> Unit,
     onEndTimeSet: (time: String, hour: Int, minute: Int) -> Unit,
     onUpdateDaysSelected: (Set<Int>) -> Unit,
-    onAutoSortChanged: (Boolean) -> Unit,
     onRoundToTwoDpChanged: (Boolean) -> Unit,
-    onSharePortfolio: () -> Unit,
-    onImportPositions: () -> Unit,
-    onExportPortfolio: () -> Unit,
     onAShareDataSourceSelected: (Int) -> Unit = {},
     onOpenSource: () -> Unit,
     // Strings (optional additions — hosts that do not wire the feature pass nothing)
-    importPositionsTitle: String = "",
-    importPositionsSubtitle: String = "",
-    importPositionsTemplateTitle: String = "",
-    onCopyTemplate: () -> Unit = {},
     aShareDataSourceTitle: String = "",
     aShareDataSources: Array<String> = emptyArray(),
     // Slots & modifiers
@@ -145,13 +132,8 @@ fun SettingsScreen(
                 startTimeTitle = startTimeTitle,
                 endTimeTitle = endTimeTitle,
                 updateDaysTitle = updateDaysTitle,
-                autoSortTitle = autoSortTitle,
-                autoSortSubtitle = autoSortSubtitle,
                 roundTwoDpTitle = roundTwoDpTitle,
                 roundTwoDpSubtitle = roundTwoDpSubtitle,
-                shareTitle = shareTitle,
-                exportTitle = exportTitle,
-                exportSubtitle = exportSubtitle,
                 openSourceText = openSourceText,
                 confirmLabel = confirmLabel,
                 dismissLabel = dismissLabel,
@@ -163,16 +145,8 @@ fun SettingsScreen(
                 onStartTimeSet = onStartTimeSet,
                 onEndTimeSet = onEndTimeSet,
                 onUpdateDaysSelected = onUpdateDaysSelected,
-                onAutoSortChanged = onAutoSortChanged,
                 onRoundToTwoDpChanged = onRoundToTwoDpChanged,
-                onSharePortfolio = onSharePortfolio,
-                onImportPositions = onImportPositions,
-                onExportPortfolio = onExportPortfolio,
                 onAShareDataSourceSelected = onAShareDataSourceSelected,
-                importPositionsTitle = importPositionsTitle,
-                importPositionsSubtitle = importPositionsSubtitle,
-                importPositionsTemplateTitle = importPositionsTemplateTitle,
-                onCopyTemplate = onCopyTemplate,
                 aShareDataSourceTitle = aShareDataSourceTitle,
                 aShareDataSources = aShareDataSources,
                 onOpenSource = onOpenSource,
@@ -191,13 +165,8 @@ private fun LazyListScope.settingsItems(
     startTimeTitle: String,
     endTimeTitle: String,
     updateDaysTitle: String,
-    autoSortTitle: String,
-    autoSortSubtitle: String,
     roundTwoDpTitle: String,
     roundTwoDpSubtitle: String,
-    shareTitle: String,
-    exportTitle: String,
-    exportSubtitle: String,
     openSourceText: String,
     confirmLabel: String,
     dismissLabel: String,
@@ -209,16 +178,8 @@ private fun LazyListScope.settingsItems(
     onStartTimeSet: (time: String, hour: Int, minute: Int) -> Unit,
     onEndTimeSet: (time: String, hour: Int, minute: Int) -> Unit,
     onUpdateDaysSelected: (Set<Int>) -> Unit,
-    onAutoSortChanged: (Boolean) -> Unit,
     onRoundToTwoDpChanged: (Boolean) -> Unit,
-    onSharePortfolio: () -> Unit,
-    onImportPositions: () -> Unit,
-    onExportPortfolio: () -> Unit,
     onAShareDataSourceSelected: (Int) -> Unit,
-    importPositionsTitle: String,
-    importPositionsSubtitle: String,
-    importPositionsTemplateTitle: String,
-    onCopyTemplate: () -> Unit,
     aShareDataSourceTitle: String,
     aShareDataSources: Array<String>,
     onOpenSource: () -> Unit,
@@ -280,63 +241,10 @@ private fun LazyListScope.settingsItems(
     }
     item {
         CheckboxPreference(
-            title = autoSortTitle,
-            subtitle = autoSortSubtitle,
-            checked = settingsData.autoSort ?: false,
-            enabled = !settingsData.hasWidgets,
-            showCheckbox = !settingsData.hasWidgets,
-            onCheckChanged = onAutoSortChanged,
-        )
-        divider()
-    }
-    item {
-        CheckboxPreference(
             title = roundTwoDpTitle,
             subtitle = roundTwoDpSubtitle,
             checked = settingsData.roundToTwoDp,
             onCheckChanged = onRoundToTwoDpChanged,
-        )
-        divider()
-    }
-    item {
-        SettingsText(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onSharePortfolio() },
-            title = shareTitle,
-        )
-        divider()
-    }
-    if (importPositionsTitle.isNotEmpty()) {
-        item {
-            SettingsText(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onImportPositions() },
-                title = importPositionsTitle,
-                subtitle = importPositionsSubtitle,
-            )
-            divider()
-        }
-    }
-    if (importPositionsTemplateTitle.isNotEmpty()) {
-        item {
-            SettingsText(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable { onCopyTemplate() },
-                title = importPositionsTemplateTitle,
-            )
-            divider()
-        }
-    }
-    item {
-        SettingsText(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onExportPortfolio() },
-            title = exportTitle,
-            subtitle = exportSubtitle,
         )
         divider()
     }
